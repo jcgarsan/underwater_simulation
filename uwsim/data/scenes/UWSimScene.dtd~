@@ -14,9 +14,9 @@
 <!ELEMENT gpsSensor (name,relativeTo,position?,orientation?, std?)>
 <!ELEMENT dvlSensor (name,relativeTo,position?,orientation?, std?)>
 <!ELEMENT multibeamSensor (name,relativeTo,position?,orientation?, initAngle,finalAngle, angleIncr,range)>
-<!ELEMENT camera (freeMotion?,objectToTrack?,fov?,aspectRatio?,near?,far?,position?,lookAt?,oculus?) >
+<!ELEMENT camera (freeMotion?,objectToTrack?,fov?,aspectRatio?,near?,far?,position?,lookAt?) >
 <!ELEMENT object (name,file,position,orientation,scaleFactor?,offsetp?,offsetr?,physics?)>
-<!ELEMENT rosInterfaces ((ROSOdomToPAT*)?, (PATToROSOdom*)?, (WorldToROSTF*)?, (ArmToROSJointState*)?, (ROSJointStateToArm*)?, (VirtualCameraToROSImage*)?, (ROSImageToHUD*)?,(ROSTwistToPAT*)?, (RangeSensorToROSRange*)?, (ROSPoseToPAT*)?, (ImuToROSImu*)?, (PressureSensorToROS*)?, (GPSSensorToROS*)?, (DVLSensorToROS*)?, (RangeImageSensorToROSImage*)?,(multibeamSensorToLaserScan*)?, (SimulatedDeviceROS*)?,(contactSensorToROS*)?,(echoROS*)?,(ForceSensorROS*)?, (ObjectPickedToROS*)?)>
+<!ELEMENT rosInterfaces ((ROSOdomToPAT*)?, (PATToROSOdom*)?, (WorldToROSTF*)?, (ArmToROSJointState*)?, (ROSJointStateToArm*)?, (VirtualCameraToROSImage*)?, (ROSImageToHUD*)?,(ROSTwistToPAT*)?, (RangeSensorToROSRange*)?, (ROSPoseToPAT*)?, (ImuToROSImu*)?, (PressureSensorToROS*)?, (GPSSensorToROS*)?, (DVLSensorToROS*)?, (RangeImageSensorToROSImage*)?,(multibeamSensorToLaserScan*)?, (SimulatedDeviceROS*)?,(contactSensorToROS*)?,(echoROS*)?,(ForceSensorROS*)?)>
 
 <!-- elementos comunes -->
 <!ELEMENT position (x,y,z)>
@@ -73,7 +73,6 @@
 <!ELEMENT aspectRatio (#PCDATA)>
 <!ELEMENT near (#PCDATA)>
 <!ELEMENT far (#PCDATA)>
-<!ELEMENT oculus (#PCDATA)>
 
 <!ELEMENT objectToTrack (#PCDATA)>
 
@@ -131,7 +130,6 @@
 <!ELEMENT DVLSensorToROS (name, topic, rate?)>
 <!ELEMENT multibeamSensorToLaserScan (name, topic, rate?)>
 <!ELEMENT contactSensorToROS (name, topic, rate?)>
-<!ELEMENT ObjectPickedToROS (name,topic,rate?)>
 
 <!ELEMENT width (#PCDATA)>
 <!ELEMENT height (#PCDATA)>

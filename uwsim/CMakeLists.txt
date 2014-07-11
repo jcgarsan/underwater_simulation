@@ -95,6 +95,7 @@ src/MultibeamSensor.cpp
 src/VirtualSLSProjector.cpp
 src/BulletPhysics.cpp
 src/PhysicsBuilder.cpp
+src/OculusCameraManipulator.cpp
 )
 
 add_library(uwsim_plugins_simdev 

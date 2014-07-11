@@ -14,6 +14,7 @@
 #include <uwsim/UWSimUtils.h>
 #include <uwsim/TextHUD.h>
 #include <uwsim/EventHandler.h>
+#include <uwsim/OculusCameraManipulator.h>
 
 #include <osgViewer/Viewer>
 #include <osgViewer/ViewerEventHandlers>
@@ -66,6 +67,12 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
     freeMotion = true;
   }
 
+  bool oculus = config.oculus;
+  if (arguments->read("--oculus"))
+  {
+    oculus = true;
+  }
+
   fullScreenNum = -1;
   if (!arguments->read("--fullScreen", fullScreenNum) && arguments->read("--fullScreen"))
   {
@@ -95,12 +102,18 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
   viewer->addEventHandler(scene_builder->getScene()->getOceanSurface()->getEventHandler());
 
   //Set main camera position, lookAt, and other params
-  if (freeMotion)
+  if (freeMotion && !oculus)
   {
     osg::ref_ptr < osgGA::TrackballManipulator > tb = new osgGA::TrackballManipulator;
     tb->setHomePosition(osg::Vec3f(config.camPosition[0], config.camPosition[1], config.camPosition[2]),
                         osg::Vec3f(config.camLookAt[0], config.camLookAt[1], config.camLookAt[2]), osg::Vec3f(0, 0, 1));
     viewer->setCameraManipulator(tb);
+  }
+  else if (oculus)
+  {
+    freeMotion = 0;
+	osg::ref_ptr <OculusCameraManipulator> ocm = new OculusCameraManipulator(scene_builder->iauvFile[0]->baseTransform);
+	viewer->setCameraManipulator(ocm);
   }
   else
   { //Main camera tracks an object

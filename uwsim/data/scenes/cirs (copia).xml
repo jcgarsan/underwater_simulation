@@ -53,7 +53,7 @@
     </showTrajectory>
   </simParams>
   <camera>
-    <freeMotion> 0 </freeMotion>
+    <freeMotion> 1 </freeMotion>
     <objectToTrack>girona500/base_link</objectToTrack>
     <fov> 60 </fov>
     <aspectRatio> 1.33 </aspectRatio>
@@ -69,7 +69,6 @@
       <y>0 </y>
       <z>0 </z>
     </lookAt>
-    <oculus> 1 </oculus>
   </camera>
 
   <vehicle>

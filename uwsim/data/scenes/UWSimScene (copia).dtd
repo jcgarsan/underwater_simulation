@@ -14,7 +14,7 @@
 <!ELEMENT gpsSensor (name,relativeTo,position?,orientation?, std?)>
 <!ELEMENT dvlSensor (name,relativeTo,position?,orientation?, std?)>
 <!ELEMENT multibeamSensor (name,relativeTo,position?,orientation?, initAngle,finalAngle, angleIncr,range)>
-<!ELEMENT camera (freeMotion?,objectToTrack?,fov?,aspectRatio?,near?,far?,position?,lookAt?,oculus?) >
+<!ELEMENT camera (freeMotion?,objectToTrack?,fov?,aspectRatio?,near?,far?,position?,lookAt?) >
 <!ELEMENT object (name,file,position,orientation,scaleFactor?,offsetp?,offsetr?,physics?)>
 <!ELEMENT rosInterfaces ((ROSOdomToPAT*)?, (PATToROSOdom*)?, (WorldToROSTF*)?, (ArmToROSJointState*)?, (ROSJointStateToArm*)?, (VirtualCameraToROSImage*)?, (ROSImageToHUD*)?,(ROSTwistToPAT*)?, (RangeSensorToROSRange*)?, (ROSPoseToPAT*)?, (ImuToROSImu*)?, (PressureSensorToROS*)?, (GPSSensorToROS*)?, (DVLSensorToROS*)?, (RangeImageSensorToROSImage*)?,(multibeamSensorToLaserScan*)?, (SimulatedDeviceROS*)?,(contactSensorToROS*)?,(echoROS*)?,(ForceSensorROS*)?, (ObjectPickedToROS*)?)>
 
@@ -73,7 +73,6 @@
 <!ELEMENT aspectRatio (#PCDATA)>
 <!ELEMENT near (#PCDATA)>
 <!ELEMENT far (#PCDATA)>
-<!ELEMENT oculus (#PCDATA)>
 
 <!ELEMENT objectToTrack (#PCDATA)>
 

@@ -53,7 +53,7 @@
     </showTrajectory>
   </simParams>
   <camera>
-    <freeMotion> 0 </freeMotion>
+    <freeMotion> 1 </freeMotion>
     <objectToTrack>girona500/base_link</objectToTrack>
     <fov> 60 </fov>
     <aspectRatio> 1.33 </aspectRatio>
@@ -69,7 +69,6 @@
       <y>0 </y>
       <z>0 </z>
     </lookAt>
-    <oculus> 1 </oculus>
   </camera>
 
   <vehicle>
@@ -92,7 +91,7 @@
       <p>0</p>
       <y>0</y>
     </orientation>
-<!--    <virtualCamera>
+    <virtualCamera>
       <name>bowtech1</name>
       <relativeTo>part0</relativeTo>
       <resw> 320 </resw>
@@ -107,8 +106,8 @@
         <p>0</p>
         <y>1.57 </y>
       </orientation>
-      draws the FOV of the camera projected on the scene each 2 seconds //comentar
-      <showpath>2</showpath>   //comentar
+      <!-- draws the FOV of the camera projected on the scene each 2 seconds -->
+      <!-- <showpath>2</showpath>  -->
     </virtualCamera>
     <virtualCamera>
       <name>bowtech2</name>
@@ -141,7 +140,7 @@
         <p>1.57</p>
         <y>0</y>
       </orientation>
-    </rangeSensor> -->
+    </rangeSensor>
 
     <imu>
       <name>imu</name>
@@ -207,7 +206,7 @@
       <std>0.0015</std>
     </dvlSensor>
 
-<!--    <virtualRangeImage>
+    <virtualRangeImage>
       <name>rangeImage</name>
       <relativeTo>part0</relativeTo>
       <resw> 320</resw>
@@ -251,7 +250,7 @@
       <finalAngle>60</finalAngle>
       <angleIncr>0.1</angleIncr>
       <range>10</range>
-    </multibeamSensor> -->
+    </multibeamSensor>
 
     <simulatedDevices>
       <echo>

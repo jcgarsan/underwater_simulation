@@ -497,19 +497,8 @@ void ConfigFile::processCamera(const xmlpp::Node* node)
       extractPositionOrColor(child, camPosition);
     else if (child->get_name() == "lookAt")
       extractPositionOrColor(child, camLookAt);
-    else if (child->get_name() == "objectToTrack")
+    if (child->get_name() == "objectToTrack")
       extractStringChar(child, vehicleToTrack);
-    else if (child->get_name() == "oculus")
-    {
-      extractIntChar(child, oculus);
-      if (oculus != 0 && oculus != 1)
-      {
-        osg::notify(osg::ALWAYS) << "ConfigFile::processCamera: oculus is not a binary value ( 0 1), using default value (1)"
-            << std::endl;
-        oculus = 1;
-      }
-    }
-
   }
 }
 
@@ -1151,7 +1140,7 @@ void ConfigFile::processPhysicProperties(const xmlpp::Node* node, PhysicProperti
       {
         osg::notify(osg::ALWAYS) << "ConfigFile::PhysicProperties: isKinematic is not a binary value ( 0 1), using default value (0)"
             << std::endl;
-        pp.isKinematic = 0;
+        freeMotion = 0;
       }
     }
     else if (child->get_name() == "minAngularLimit")
@@ -1303,10 +1292,6 @@ void ConfigFile::processROSInterfaces(const xmlpp::Node* node)
     else if (child->get_name() == "RangeSensorToROSRange")
     {
       rosInterface.type = ROSInterfaceInfo::RangeSensorToROSRange;
-    }
-    else if(child->get_name()=="ObjectPickedToROS")
-    {
- 	rosInterface.type=ROSInterfaceInfo::ObjectPickedToROS;
     }
     else if (child->get_name() == "ROSImageToHUD")
     {

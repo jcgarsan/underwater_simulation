@@ -462,15 +462,7 @@ bool SceneBuilder::loadScene(ConfigFile config)
       for (size_t i = 0; i < ifaces.size(); ++i)
         ROSInterfaces.push_back(ifaces[i]);
     }
-    if(rosInterface.type==ROSInterfaceInfo::ObjectPickedToROS)
-    {   //Find corresponding VirtualRangeSensor Object on all the vehicles (look for objectPickers)
- 	for (int j=0; j<nvehicle;j++)
-        {
-        	for (unsigned int c=0; c<iauvFile[j]->getNumObjectPickers(); c++)
- 			if (iauvFile[j]->object_pickers[c].name==rosInterface.targetName)
-				iface=boost::shared_ptr<ObjectPickedToROS>(new ObjectPickedToROS(&(iauvFile[j]->object_pickers[c]),rosInterface.topic, rosInterface.rate));
-        }
-    }
+
     if (iface)
       ROSInterfaces.push_back(iface);
     config.ROSInterfaces.pop_front();
