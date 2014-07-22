@@ -16,6 +16,9 @@
 #include <uwsim/EventHandler.h>
 #include <uwsim/OculusCameraManipulator.h>
 
+#include <uwsim/HMDCameraMP.h>
+#include <uwsim/oculusdevice.h>
+
 #include <osgViewer/Viewer>
 #include <osgViewer/ViewerEventHandlers>
 #include <osgGA/TrackballManipulator>
@@ -94,7 +97,68 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
   }
 
   //Initialize viewer
-  viewer = new osgViewer::Viewer();
+  if (!oculus)
+  { //We don't use Oculus with the UWSim
+		viewer = new osgViewer::Viewer();	 
+		osgViewer::Viewer viewer();
+  }
+  else
+  {	// OCULUS RIFT: Open the HMD
+		oculusDevice = new OculusDevice();
+		oculusDevice->setCustomScaleFactor(1.25f);
+
+		// Create screen with match the Oculus Rift resolution
+		osg::GraphicsContext::WindowingSystemInterface* wsi = osg::GraphicsContext::getWindowingSystemInterface();
+
+		if (!wsi) {
+			osg::notify(osg::NOTICE)<<"Error, no WindowSystemInterface available, cannot create windows."<<std::endl;
+			return 1;
+		}
+
+		// Get the screen identifiers set in environment variable DISPLAY
+		osg::GraphicsContext::ScreenIdentifier si;
+		si.readDISPLAY();
+
+		// If displayNum has not been set, reset it to 0.
+		if (si.displayNum < 0) si.displayNum = 0;
+
+		// If screenNum has not been set, reset it to 0.
+		if (si.screenNum < 0) si.screenNum = 0;
+
+		unsigned int width, height;
+		wsi->getScreenResolution(si, width, height);
+
+		osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+		traits->hostName = si.hostName;
+		traits->screenNum = si.screenNum;
+		traits->displayNum = si.displayNum;
+		traits->windowDecoration = false;
+		traits->x = 0;
+		traits->y = 0;
+		traits->width = oculusDevice->hScreenResolution();
+		traits->height = oculusDevice->vScreenResolution();
+		traits->doubleBuffer = true;
+		traits->sharedContext = 0;
+		traits->vsync = true; // VSync should always be enabled for Oculus Rift applications
+
+		// Create a graphic context based on our desired traits
+		osg::ref_ptr<osg::GraphicsContext> gc = osg::GraphicsContext::createGraphicsContext(traits);
+		if (!gc) {
+			osg::notify(osg::NOTICE) << "Error, GraphicsWindow has not been created successfully" << std::endl;
+			return 1;
+		}
+
+		if (gc.valid()) {
+			gc->setClearColor(osg::Vec4(0.2f, 0.2f, 0.4f, 1.0f));
+			gc->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		}
+	
+		viewer = new osgViewer::Viewer();
+		viewer->getCamera()->setGraphicsContext(gc);
+		viewer->getCamera()->setViewport(0, 0, traits->width, traits->height);
+	}
+
+
   viewer->addEventHandler(new osgViewer::StatsHandler);
   osg::ref_ptr < TextHUD > hud = new TextHUD;
 
@@ -112,8 +176,8 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
   else if (oculus)
   {
     freeMotion = 0;
-	osg::ref_ptr <OculusCameraManipulator> ocm = new OculusCameraManipulator(scene_builder->iauvFile[0]->baseTransform);
-	viewer->setCameraManipulator(ocm);
+		osg::ref_ptr <OculusCameraManipulator> ocm = new OculusCameraManipulator(scene_builder->iauvFile[0]->baseTransform);
+		viewer->setCameraManipulator(ocm);
   }
   else
   { //Main camera tracks an object
@@ -162,7 +226,16 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
   }
 
   OSG_INFO << "Setting main viewer" << std::endl;
-  viewer->setSceneData(scene_builder->getRoot());
+	if (!oculus)
+	{ //We don't use Oculus with UWSim
+		viewer->setSceneData(scene_builder->getRoot());
+	}
+	else
+	{ //We use Oculus with UWSim
+		hmd_camera = new HMDCamera(viewer, oculusDevice);
+		hmd_camera->addChild(scene_builder->getRoot());
+		viewer->setSceneData(hmd_camera);
+	}
 
   OSG_INFO << "Starting window manager..." << std::endl;
   wm = new osgWidget::WindowManager(viewer, reswidth, resheight, 0xF0000000, 0);

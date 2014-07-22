@@ -23,6 +23,9 @@
 #include "ConfigXMLParser.h"
 #include "SceneBuilder.h"
 
+#include <uwsim/HMDCameraMP.h>
+#include <uwsim/oculusdevice.h>
+
 class ViewBuilder
 {
 public:
@@ -31,6 +34,9 @@ public:
   int fullScreenNum;
 
 public:
+  osg::ref_ptr<OculusDevice> oculusDevice;
+  osg::ref_ptr<HMDCamera> hmd_camera;
+
   osg::ref_ptr<osgWidget::WindowManager> wm;
   ViewBuilder(ConfigFile &config, SceneBuilder *scene_builder);
   ViewBuilder(ConfigFile &config, SceneBuilder *scene_builder, int *argc, char **argv);
