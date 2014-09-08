@@ -27,6 +27,16 @@ HMDCamera::HMDCamera(osgViewer::View *view, OculusDevice *dev) : osg::Group(),
 {}
 
 
+void HMDCamera::addSlaveToCams(osg::Node * node)
+{
+  std::cout<<"Done huds"<<std::endl;
+
+  l_hud1->addChild(node);
+  l_hud2->addChild(node);
+
+}
+
+
 HMDCamera::~HMDCamera()
 {
 }
@@ -137,6 +147,9 @@ void HMDCamera::configure()
     osg::ref_ptr<osg::Camera> r_hud = createHUDCam(0.0, 1.0, 0.0, 1.0);
     r_hud->setViewport(new osg::Viewport(m_dev->hScreenResolution() / 2.0f, 0,
                                          m_dev->hScreenResolution() / 2.0f, m_dev->vScreenResolution()));
+
+    l_hud1 = l_hud;
+    l_hud2 = r_hud;
 
     // Create quads on each camera
     osg::ref_ptr<osg::Geode> leftQuad = createHUDQuad(1.0f, 1.0f);

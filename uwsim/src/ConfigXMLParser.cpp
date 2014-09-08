@@ -509,6 +509,16 @@ void ConfigFile::processCamera(const xmlpp::Node* node)
         oculus = 1;
       }
     }
+    else if (child->get_name() == "windshield")
+    {
+      extractIntChar(child, windshield);
+      if (windshield != 0 && windshield != 1)
+      {
+        osg::notify(osg::ALWAYS) << "ConfigFile::processCamera: windshield is not a binary value ( 0 1), using default value (1)"
+            << std::endl;
+        windshield = 1;
+      }
+    }
 
   }
 }

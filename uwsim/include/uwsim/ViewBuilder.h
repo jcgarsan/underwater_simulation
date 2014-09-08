@@ -26,6 +26,9 @@
 #include <uwsim/HMDCameraMP.h>
 #include <uwsim/oculusdevice.h>
 
+#include <osg/Camera>
+#include <osg/ShapeDrawable>
+
 class ViewBuilder
 {
 public:
@@ -36,6 +39,7 @@ public:
 public:
   osg::ref_ptr<OculusDevice> oculusDevice;
   osg::ref_ptr<HMDCamera> hmd_camera;
+  osg::Camera* createHUDCamera( );
 
   osg::ref_ptr<osgWidget::WindowManager> wm;
   ViewBuilder(ConfigFile &config, SceneBuilder *scene_builder);

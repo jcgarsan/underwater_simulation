@@ -69,7 +69,8 @@
       <y>0 </y>
       <z>0 </z>
     </lookAt>
-    <oculus> 0 </oculus>
+    <oculus> 1 </oculus>
+    <windshield> 1 </windshield>
   </camera>
 
   <vehicle>
@@ -125,12 +126,12 @@
         <p>0</p>
         <y>1.57 </y>
       </orientation>
-    </virtualCamera>
+    </virtualCamera> -->
     <rangeSensor>
       <name>sonar</name>
       <relativeTo>part0</relativeTo>
       <range>10</range>
-      <visible>0</visible>
+      <visible>1</visible>
       <position>
         <x>-0.3</x>
         <y>0</y>
@@ -141,7 +142,7 @@
         <p>1.57</p>
         <y>0</y>
       </orientation>
-    </rangeSensor> -->
+    </rangeSensor>
 
     <imu>
       <name>imu</name>

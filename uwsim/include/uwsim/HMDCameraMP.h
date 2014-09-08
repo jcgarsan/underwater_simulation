@@ -22,6 +22,7 @@ class HMDCamera: public osg::Group
     public:
         HMDCamera(osgViewer::View *view, OculusDevice *dev);
         virtual void traverse(osg::NodeVisitor& nv);
+		void addSlaveToCams(osg::Node * node);
 
     protected:
         virtual ~HMDCamera();
@@ -35,6 +36,7 @@ class HMDCamera: public osg::Group
         osg::observer_ptr<osgViewer::View> m_view;
         osg::observer_ptr<osg::Camera> m_l_rtt, m_r_rtt;
         OculusDevice *m_dev;
+		osg::ref_ptr<osg::Camera> l_hud1, l_hud2;
 };
 
 #endif /* HMDCAMERA_H_ */

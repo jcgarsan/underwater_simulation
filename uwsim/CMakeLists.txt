@@ -52,6 +52,7 @@ catkin_package(
     uwsim_osgworks
 	libudev-dev
 	libxinerama-dev
+	roslib
 )
 
 find_package(Boost REQUIRED thread program_options system filesystem)

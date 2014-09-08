@@ -15,6 +15,7 @@
 
 #include <osgWidget/Util>
 #include <osgOcean/OceanScene>
+#include <osg/TriangleFunctor>
 
 #include "osgOceanScene.h"
 #include "HUDCamera.h"

@@ -57,6 +57,7 @@
       <y>7 </y>
       <z>-10 </z>
     </lookAt>
+    <oculus> 0 </oculus>
   </camera>
 
  <vehicle>

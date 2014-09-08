@@ -13,6 +13,8 @@
 #include <uwsim/SceneBuilder.h>
 
 #include <osg/Notify>
+#include <osg/TriangleFunctor>
+#include <osg/ShapeDrawable>
 
 #include <string>
 #include <vector>
@@ -25,6 +27,7 @@
 #include <uwsim/TrajectoryVisualization.h>
 
 using namespace std;
+
 
 SceneBuilder::SceneBuilder()
 {
@@ -490,6 +493,7 @@ bool SceneBuilder::loadScene(ConfigFile config)
 
     config.trajectories.pop_front();
   }
+
 
   return true;
 }

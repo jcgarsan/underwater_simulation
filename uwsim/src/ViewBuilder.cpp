@@ -32,6 +32,20 @@
 #include <osgWidget/ViewerEventHandlers>
 #include <osg/GraphicsContext>
 
+#include <osg/Camera>
+#include <osg/ShapeDrawable>
+
+osg::Camera* createHUDCamera( )
+{
+	osg::ref_ptr<osg::Camera> camera = new osg::Camera;
+	camera->setName("ShieldCamera");
+	camera->setReferenceFrame( osg::Transform::ABSOLUTE_RF );
+	camera->setClearMask( GL_DEPTH_BUFFER_BIT );
+	camera->setRenderOrder( osg::Camera::POST_RENDER );
+	camera->setViewMatrixAsLookAt(osg::Vec3(0.0f,-5.0f,5.0f), osg::Vec3(),osg::Vec3(0.0f,1.0f,1.0f));
+	return camera.release();
+}
+
 ViewBuilder::ViewBuilder(ConfigFile &config, SceneBuilder *scene_builder, int *argc, char **argv)
 {
   arguments.reset(new osg::ArgumentParser(argc, argv));
@@ -76,6 +90,12 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
     oculus = true;
   }
 
+  bool windshield = config.windshield;
+  if (arguments->read("--windshield"))
+  {
+    windshield = true;
+  }
+
   fullScreenNum = -1;
   if (!arguments->read("--fullScreen", fullScreenNum) && arguments->read("--fullScreen"))
   {
@@ -98,7 +118,7 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
 
   //Initialize viewer
   if (!oculus)
-  { //We don't use Oculus with the UWSim
+  { //We don't use Oculus with the UWSim.
 		viewer = new osgViewer::Viewer();	 
 		osgViewer::Viewer viewer();
   }
@@ -176,8 +196,8 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
   else if (oculus)
   {
     freeMotion = 0;
-		osg::ref_ptr <OculusCameraManipulator> ocm = new OculusCameraManipulator(scene_builder->iauvFile[0]->baseTransform);
-		viewer->setCameraManipulator(ocm);
+	osg::ref_ptr <OculusCameraManipulator> ocm = new OculusCameraManipulator(scene_builder->iauvFile[0]->baseTransform);
+	viewer->setCameraManipulator(ocm);
   }
   else
   { //Main camera tracks an object
@@ -236,6 +256,38 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
 		hmd_camera->addChild(scene_builder->getRoot());
 		viewer->setSceneData(hmd_camera);
 	}
+
+
+
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+	if (windshield) 
+	{
+	  osg::ref_ptr<osg::Camera> camera = new osg::Camera;
+	  camera->setName("ShieldCam");
+	  camera->setReferenceFrame( osg::Transform::ABSOLUTE_RF );
+	  camera->setClearMask( GL_DEPTH_BUFFER_BIT );
+	  camera->setRenderOrder( osg::Camera::POST_RENDER );
+	  camera->setViewMatrixAsLookAt(osg::Vec3(0.0f,-5.0f,5.0f), osg::Vec3(),osg::Vec3(0.0f,1.0f,1.0f));
+	 
+	  osg::Matrix linkBaseMatrix;
+	  linkBaseMatrix.makeTranslate(osg::Vec3f(-1,-7,5));
+	  osg::MatrixTransform *linkBaseTransform = new osg::MatrixTransform(linkBaseMatrix);
+	  osg::Group* root = new osg::Group();
+	  osg::Box* unitCube = new osg::Box( osg::Vec3(1,1,1), 1.0f);
+	  osg::ShapeDrawable* unitCubeDrawable = new osg::ShapeDrawable(unitCube);
+	  osg::Geode* basicShapesGeode = new osg::Geode();
+	  basicShapesGeode->addDrawable(unitCubeDrawable);
+	  linkBaseTransform->addChild(basicShapesGeode);
+	  camera->addChild(linkBaseTransform );
+
+	  if (oculus)
+		  hmd_camera->addSlaveToCams(camera);
+
+	  scene_builder->getRoot()->addChild(camera);		/////////////////////////// 
+	}
+/////////////////////////////////////////////////////////
+
 
   OSG_INFO << "Starting window manager..." << std::endl;
   wm = new osgWidget::WindowManager(viewer, reswidth, resheight, 0xF0000000, 0);
