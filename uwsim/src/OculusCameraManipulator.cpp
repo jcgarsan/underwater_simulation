@@ -16,7 +16,7 @@
 void OculusCameraManipulator::ocmCallback(const geometry_msgs::Quaternion::ConstPtr& hmdimu)
 {
 	//cout << "hmdimu: (" << hmdimu->x << "," << hmdimu->y << "," << hmdimu->z << "," << hmdimu->w << ")" << endl;
-	_offset.makeRotate(osg::Quat(-hmdimu->x, -hmdimu->y, hmdimu->z, hmdimu->w));
+	_offset.makeRotate(osg::Quat(-hmdimu->x, -hmdimu->y, -hmdimu->z, hmdimu->w));
 	_offset.preMultRotate(osg::Quat(osg::DegreesToRadians(-90.0), osg::Vec3(0,0,1)));
 	_offset.preMultRotate(osg::Quat(osg::DegreesToRadians(90.0), osg::Vec3(0,1,0)));
 }

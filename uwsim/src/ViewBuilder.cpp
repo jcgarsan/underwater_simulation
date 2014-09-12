@@ -267,11 +267,14 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
 	  camera->setName("ShieldCam");
 	  camera->setReferenceFrame( osg::Transform::ABSOLUTE_RF );
 	  camera->setClearMask( GL_DEPTH_BUFFER_BIT );
-	  camera->setRenderOrder( osg::Camera::POST_RENDER );
+	  camera->setRenderOrder( osg::Camera::NESTED_RENDER ); //POST_RENDER );
+	  camera->getOrCreateStateSet()->setRenderBinDetails( 9999, "RenderBin" );
+	  camera->getOrCreateStateSet()->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
 	  camera->setViewMatrixAsLookAt(osg::Vec3(0.0f,-5.0f,5.0f), osg::Vec3(),osg::Vec3(0.0f,1.0f,1.0f));
 	 
 	  osg::Matrix linkBaseMatrix;
-	  linkBaseMatrix.makeTranslate(osg::Vec3f(-1,-7,5));
+//	  linkBaseMatrix.makeTranslate(osg::Vec3f(-1,-7,5));
+	  linkBaseMatrix.makeTranslate(osg::Vec3f(-1,-5.5,3.0));
 	  osg::MatrixTransform *linkBaseTransform = new osg::MatrixTransform(linkBaseMatrix);
 	  osg::Group* root = new osg::Group();
 	  osg::Box* unitCube = new osg::Box( osg::Vec3(1,1,1), 1.0f);
@@ -281,8 +284,8 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
 	  linkBaseTransform->addChild(basicShapesGeode);
 	  camera->addChild(linkBaseTransform );
 
-	  if (oculus)
-		  hmd_camera->addSlaveToCams(camera);
+//	  if (oculus)
+//		  hmd_camera->addSlaveToCams(camera);
 
 	  scene_builder->getRoot()->addChild(camera);		/////////////////////////// 
 	}
