@@ -10,7 +10,7 @@
 
 #include <osgViewer/ViewerEventHandlers>
 
-#include "uwsim/oculusviewconfig.h"
+#include "oculusviewconfig.h"
 
 class OculusEventHandler : public osgGA::GUIEventHandler
 {

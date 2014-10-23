@@ -15,8 +15,8 @@
 
 #include <osgViewer/View>
 
-#include "oculusviewconfig.h"
-#include "oculusdevice.h"
+#include "uwsim/oculusviewconfig.h"
+#include "uwsim/oculusdevice.h"
 
 osg::Camera* OculusViewConfig::createRTTCamera(osg::Texture* texture, osg::GraphicsContext* gc) const
 {

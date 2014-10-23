@@ -8,8 +8,7 @@
 #ifndef _OSG_OCULUSDEVICE_H_
 #define _OSG_OCULUSDEVICE_H_
 
-//#include "OVR.h"
-#include "LibOVR/Include/OVR.h"
+#include <OVR.h>
 #include <osg/Matrix>
 
 

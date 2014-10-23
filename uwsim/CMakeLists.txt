@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(uwsim)
 
-SET(OCULUS_SDK_ROOT_DIR "/home/jcgarsan/Descargas/OculusSDK")
+SET(OCULUS_SDK_ROOT_DIR "/home/garciaju/OculusSDK-0.2.5c")
 SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -70,7 +70,7 @@ CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/uwsim/SimulatorConfig.h.cmake
 find_package(PkgConfig)
 pkg_check_modules(LIBXML++ REQUIRED libxml++-2.6)
 
-INCLUDE_DIRECTORIES(include ${BULLET_INCLUDE_DIRS} ${OSGWORKS_INCLUDE_DIR} ${OSGBULLET_INCLUDE_DIR} ${OSGOCEAN_INCLUDE_DIRS} ${LIBXML++_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${OculusSDK_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(include ${BULLET_INCLUDE_DIRS} ${OSGWORKS_INCLUDE_DIR} ${OSGBULLET_INCLUDE_DIR} ${OSGOCEAN_INCLUDE_DIRS} ${LIBXML++_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${OCULUS_SDK_INCLUDE_DIRS})
 
 link_directories(${orocos_kdl_LIBRARY_DIRS})
 
@@ -104,7 +104,7 @@ src/BulletPhysics.cpp
 src/PhysicsBuilder.cpp
 src/OculusCameraManipulator.cpp
 src/oculusdevice.cpp
-src/HMDCameraMP.cpp
+src/hmdcamera.cpp
 )
 
 add_library(uwsim_plugins_simdev 

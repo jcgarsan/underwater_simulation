@@ -5,8 +5,8 @@
  *      Author: Bjorn Blissing
  */
 
-//#include "oculusdevice.h"
 #include "uwsim/oculusdevice.h"
+
 
 OculusDevice::OculusDevice() :
 	m_deviceManager(0), m_hmdDevice(0), m_sensor(0), m_hmdInfo(0), m_sensorFusion(0),

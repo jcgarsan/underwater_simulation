@@ -16,7 +16,6 @@
 #include <uwsim/EventHandler.h>
 #include <uwsim/OculusCameraManipulator.h>
 
-#include <uwsim/HMDCameraMP.h>
 #include <uwsim/oculusdevice.h>
 
 #include <osgViewer/Viewer>

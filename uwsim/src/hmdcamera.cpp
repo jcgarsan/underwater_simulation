@@ -122,8 +122,7 @@ void HMDCamera::configure()
 	m_view->getCamera()->setProjectionMatrix(m_device->projectionCenterMatrix());
 	m_view->setName("Oculus");
 	osg::ref_ptr<osg::Camera> mainCamera = m_view->getCamera();
-//	mainCamera->setName("Main");
-	mainCamera->setName("CamViewCamera");
+	mainCamera->setName("Main");
 	// Disable scene rendering for main camera
 	mainCamera->setCullMask(~m_sceneNodeMask);
 
@@ -138,22 +137,18 @@ void HMDCamera::configure()
 	// Create render to texture cameras
 	m_cameraRTTLeft = createRTTCamera(textureLeft, gc.get());
 	m_cameraRTTRight = createRTTCamera(textureRight, gc.get());
-//	m_cameraRTTLeft->setName("LeftRTT");
-//	m_cameraRTTRight->setName("RightRTT");
-	m_cameraRTTLeft->setName("CamViewCamera");
-	m_cameraRTTRight->setName("CamViewCamera");
+	m_cameraRTTLeft->setName("LeftRTT");
+	m_cameraRTTRight->setName("RightRTT");
 	m_cameraRTTLeft->setCullMask(m_sceneNodeMask);
 	m_cameraRTTRight->setCullMask(m_sceneNodeMask);
 
 	
 	// Create HUD cameras for each eye
 	osg::ref_ptr<osg::Camera> cameraHUDLeft = createHUDCamera(0.0, 1.0, 0.0, 1.0, gc.get());
-//	cameraHUDLeft->setName("LeftHUD");
-	cameraHUDLeft->setName("CamViewCamera");
+	cameraHUDLeft->setName("LeftHUD");
 	cameraHUDLeft->setViewport(new osg::Viewport(0, 0, m_device->hScreenResolution() / 2.0f, m_device->vScreenResolution()));
 	osg::ref_ptr<osg::Camera> cameraHUDRight = createHUDCamera(0.0, 1.0, 0.0, 1.0, gc.get());
-//	cameraHUDRight->setName("RightHUD");
-	cameraHUDRight->setName("CamViewCamera");
+	cameraHUDRight->setName("RightHUD");
 	cameraHUDRight->setViewport(new osg::Viewport(m_device->hScreenResolution() / 2.0f, 0,
 										 m_device->hScreenResolution() / 2.0f, m_device->vScreenResolution()));
 	// Create quads on each camera
