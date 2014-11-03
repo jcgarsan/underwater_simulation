@@ -19,6 +19,8 @@
 #include "uwsim/hmdcamera.h"
 #include "uwsim/oculusdevice.h"
 
+#include <osgOcean/ShaderManager>
+
 
 HMDCamera::HMDCamera(osgViewer::View* view, osg::ref_ptr<OculusDevice> dev) : osg::Group(),
 	m_configured(false),
@@ -120,11 +122,11 @@ void HMDCamera::configure()
 	
 	// master projection matrix
 	m_view->getCamera()->setProjectionMatrix(m_device->projectionCenterMatrix());
-	m_view->setName("Oculus");
+//	m_view->setName("Oculus");
 	osg::ref_ptr<osg::Camera> mainCamera = m_view->getCamera();
-	mainCamera->setName("Main");
+//	mainCamera->setName("Main");
 	// Disable scene rendering for main camera
-	mainCamera->setCullMask(~m_sceneNodeMask);
+//	mainCamera->setCullMask(~m_sceneNodeMask);
 
 	osg::ref_ptr<osg::Texture2D> textureLeft = new osg::Texture2D;
 	textureLeft->setTextureSize( textureWidth, textureHeight );
@@ -158,13 +160,20 @@ void HMDCamera::configure()
 	cameraHUDRight->addChild(rightQuad);
 	
 	// Set up shaders from the Oculus SDK documentation
-	osg::ref_ptr<osg::Program> program = new osg::Program;
+/*	osg::ref_ptr<osg::Program> program = new osg::Program;
 	osg::ref_ptr<osg::Shader> vertexShader = new osg::Shader(osg::Shader::VERTEX);
 	vertexShader->loadShaderSourceFromFile(osgDB::findDataFile("warp.vert"));
 	osg::ref_ptr<osg::Shader> fragmentShader = new osg::Shader(osg::Shader::FRAGMENT);
+*/
+
+	// by japerez@uji.es
+    static const char model_vertex[] = "warp.vert";
+    static const char model_fragment[] = "warpWithChromeAb.frag";
+    osg::ref_ptr<osg::Program>  program = osgOcean::ShaderManager::instance().createProgram("object_shader", model_vertex,
+                                                                              model_fragment, "", "");
 
 	// Fragment shader with or without correction for chromatic aberration
-	if (m_useChromaticAberrationCorrection) {
+/*	if (m_useChromaticAberrationCorrection) {
 		fragmentShader->loadShaderSourceFromFile(osgDB::findDataFile("warpWithChromeAb.frag"));
 	} else {
 		fragmentShader->loadShaderSourceFromFile(osgDB::findDataFile("warpWithoutChromeAb.frag"));
@@ -172,6 +181,7 @@ void HMDCamera::configure()
 
 	program->addShader(vertexShader);
 	program->addShader(fragmentShader);
+*/
 
 	// Attach shaders to each HUD
 	osg::StateSet* leftEyeStateSet = leftQuad->getOrCreateStateSet();
@@ -181,10 +191,10 @@ void HMDCamera::configure()
 
 	// Add cameras as slaves, specifying offsets for the projection
 	m_view->addSlave(m_cameraRTTLeft.get(), m_device->projectionOffsetMatrix(OculusDevice::LEFT_EYE), 
-		m_device->viewMatrix(OculusDevice::LEFT_EYE), 
+		osg::Matrixf::identity(), //m_device->viewMatrix(OculusDevice::LEFT_EYE), 
 		true);
 	m_view->addSlave(m_cameraRTTRight.get(), m_device->projectionOffsetMatrix(OculusDevice::RIGHT_EYE), 
-		m_device->viewMatrix(OculusDevice::RIGHT_EYE), 
+		osg::Matrixf::identity(), //m_device->viewMatrix(OculusDevice::RIGHT_EYE), 
 		true);
 	m_view->addSlave(cameraHUDLeft, false);
 	m_view->addSlave(cameraHUDRight, false);

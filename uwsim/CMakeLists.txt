@@ -104,7 +104,8 @@ src/BulletPhysics.cpp
 src/PhysicsBuilder.cpp
 src/OculusCameraManipulator.cpp
 src/oculusdevice.cpp
-src/hmdcamera.cpp
+#src/hmdcamera.cpp
+src/HMDCameraMP.cpp
 )
 
 add_library(uwsim_plugins_simdev 

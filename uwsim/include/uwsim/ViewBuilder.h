@@ -23,7 +23,8 @@
 #include "ConfigXMLParser.h"
 #include "SceneBuilder.h"
 
-#include <uwsim/hmdcamera.h>
+//#include <uwsim/hmdcamera.h>
+#include <uwsim/HMDCameraMP.h>
 #include <uwsim/oculusdevice.h>
 
 #include <osg/Camera>
