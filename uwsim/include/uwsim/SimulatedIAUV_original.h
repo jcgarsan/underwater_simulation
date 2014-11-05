@@ -26,9 +26,6 @@
 #include "DVLSensor.h"
 #include "MultibeamSensor.h"
 
-#include <nav_msgs/Odometry.h>
-#include <underwater_sensor_msgs/Pressure.h>
-
 class SceneBuilder;
 
 /* An I-AUV */

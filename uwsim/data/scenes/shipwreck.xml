@@ -6,16 +6,16 @@
   <oceanState>
     <windx> 1.0 </windx>
     <windy> 1.0 </windy>
-    <windSpeed> 12 </windSpeed>
-    <depth> 10000 </depth>
-    <reflectionDamping> 0.35 </reflectionDamping>
+    <windSpeed> 0 </windSpeed>		<!-- 12 -->
+    <depth> 100 </depth>		<!-- 10000 -->
+    <reflectionDamping> 0.35 </reflectionDamping> <!-- .35 -->
     <waveScale> 1e-8 </waveScale>
     <isNotChoppy> 0 </isNotChoppy>
     <choppyFactor> -2.5 </choppyFactor>
     <crestFoamHeight> 2.2 </crestFoamHeight>
     <oceanSurfaceHeight> 0 </oceanSurfaceHeight>
     <fog>
-      <density> 0.1 </density>
+      <density> 0 </density>		<!-- ISR_experiments 0.05, original 0.1 -->
       <color>
 	<r>0.017</r>
 	<g>0.027</g>
@@ -41,21 +41,21 @@
   </simParams>
 
   <camera>
-    <freeMotion> 1 </freeMotion>
-    <objectToTrack>girona500_RAUVI/base_link</objectToTrack>
+    <freeMotion> 0 </freeMotion>	<!-- 1 -->
+    <objectToTrack>girona500_RAUVI</objectToTrack>
     <fov> 60 </fov>
     <aspectRatio> 1.33 </aspectRatio>
     <near> 1 </near>
-    <far> 10000 </far>
-    <position>
-      <x>16</x>
-      <y>9 </y>
-      <z>-7 </z>
-    </position> 
+    <far> 300 </far>			<!-- 10000 -->
+    <position>				<!-- 16, 9, -7 -->
+      <x> 0 </x>
+      <y> 0 </y>
+      <z> 0 </z>
+    </position>				<!-- 5, 7, -10 -->
     <lookAt>
-      <x>5</x>
-      <y>7 </y>
-      <z>-10 </z>
+      <x> 0.3 </x>
+      <y> 0.1 </y>
+      <z> 0 </z>
     </lookAt>
     <oculus> 1 </oculus>
     <windshield> 0 </windshield>
@@ -81,6 +81,40 @@
       <p>0 </p>
       <y>0 </y>
     </orientation>
+
+    <rangeSensor>
+      <name>sonar</name>
+      <relativeTo>part0</relativeTo>
+      <range>10</range>
+      <visible>1</visible>
+      <position>
+        <x>-0.3</x>
+        <y>0</y>
+        <z>0</z>
+      </position>  
+      <orientation>
+        <r>0</r>
+        <p>1.57</p>
+        <y>0</y>
+      </orientation>
+    </rangeSensor>
+
+    <pressureSensor>
+      <name>pressureSensor</name>
+      <relativeTo>base_link</relativeTo>
+      <position>
+        <x>0</x>
+        <y>0</y>
+        <z>0.2</z>
+      </position>  
+      <orientation>
+        <r>0</r>
+        <p>0</p>
+        <y>0</y>
+      </orientation>
+      <std>0.02</std>
+    </pressureSensor>
+
   </vehicle>
 
 <!--  <vehicle>
@@ -124,6 +158,121 @@
     </physics>
   </object>
 
+  <object>
+    <name>waypoint1</name>
+    <file>objects/torus.obj</file>
+    <position>
+      <x> 15 </x>
+      <y> 5 </y>
+      <z> -8 </z>
+    </position>
+    <orientation>
+      <r> 0 </r>
+      <p> 0 </p>
+      <y> 2 </y>
+    </orientation>
+    <scaleFactor>
+      <x> 0.2 </x>
+      <y> 0.2 </y>
+      <z> 0.2 </z>
+    </scaleFactor>
+    <physics>
+      <mass> 0 </mass>
+    </physics>
+  </object>
+
+  <object>
+    <name>waypoint2</name>
+    <file>objects/torus.obj</file>
+    <position>
+      <x> 30 </x>
+      <y> 15 </y>
+      <z> -10 </z>
+    </position>
+    <orientation>
+      <r> 0</r>
+      <p> 0 </p>
+      <y> 3 </y>
+    </orientation>
+    <scaleFactor>
+      <x> 0.2 </x>
+      <y> 0.2 </y>
+      <z> 0.2 </z>
+    </scaleFactor>
+    <physics>
+      <mass> 0 </mass>
+    </physics>
+  </object>
+
+  <object>
+    <name>waypoint3</name>
+    <file>objects/torus.obj</file>
+    <position>
+      <x> 30 </x>
+      <y> 30 </y>
+      <z> -10 </z>
+    </position>
+    <orientation>
+      <r> 0 </r>
+      <p> 0 </p>
+      <y> 3.4 </y>
+    </orientation>
+    <scaleFactor>
+      <x> 0.2 </x>
+      <y> 0.2 </y>
+      <z> 0.2 </z>
+    </scaleFactor>
+    <physics>
+      <mass> 0 </mass>
+    </physics>
+  </object>
+
+  <object>
+    <name>waypoint4</name>
+    <file>objects/torus.obj</file>
+    <position>
+      <x> 10 </x>
+      <y> 28 </y>
+      <z> -3 </z>
+    </position>
+    <orientation>
+      <r> 0 </r>
+      <p> 0 </p>
+      <y> 4.5 </y>
+    </orientation>
+    <scaleFactor>
+      <x> 0.2 </x>
+      <y> 0.2 </y>
+      <z> 0.2 </z>
+    </scaleFactor>
+    <physics>
+      <mass> 0 </mass>
+    </physics>
+  </object>
+
+  <object>
+    <name>waypoint5</name>
+    <file>objects/torus.obj</file>
+    <position>
+      <x> -5 </x>
+      <y> 10 </y>
+      <z> -10 </z>
+    </position>
+    <orientation>
+      <r> 0</r>
+      <p> 0 </p>
+      <y> 5.3 </y>
+    </orientation>
+    <scaleFactor>
+      <x> 0.2 </x>
+      <y> 0.2 </y>
+      <z> 0.2 </z>
+    </scaleFactor>
+    <physics>
+      <mass> 0 </mass>
+    </physics>
+  </object>
+
   <rosInterfaces>
     <ROSOdomToPAT>
       <topic> /dataNavigator_G500RAUVI </topic>
@@ -146,6 +295,16 @@
       <enableObjects> 0 </enableObjects>
       <rate>10</rate>
     </WorldToROSTF>
+    <RangeSensorToROSRange>
+      <name>sonar</name>
+      <topic> /uwsim/g500/range </topic>
+      <rate>10</rate>
+    </RangeSensorToROSRange>
+    <PressureSensorToROS>
+      <name>pressureSensor</name>
+      <topic>g500/pressure</topic>
+      <rate>5</rate>
+    </PressureSensorToROS>
   </rosInterfaces>
 
 </UWSimScene>
