@@ -55,7 +55,7 @@ public:
   osg::ref_ptr<osg::Geode> geode; //Geometry node that draws the beam
   boost::shared_ptr<osg::Matrix> LWMat; //LocalizedWorld Inverted Matrix ( to know distnace from it)
 
-  TrajectoryUpdateCallback(double color[3], double maxWaypointDistance, int pattern, osg::Group *rootNode)
+  TrajectoryUpdateCallback(double color[3], double maxWaypointDistance, int pattern, osg::Group *rootNode, unsigned int mask)
   {
     this->maxWaypointDistance=maxWaypointDistance;
     trajectory_initialized=false;
@@ -117,6 +117,7 @@ public:
     geode->getOrCreateStateSet()->setAttributeAndModes(program, osg::StateAttribute::ON);
     geode->getStateSet()->addUniform(new osg::Uniform("uOverlayMap", 1));
     geode->getStateSet()->addUniform(new osg::Uniform("uNormalMap", 2));
+	geode->setNodeMask(mask);
     swNode->addChild(geode);
 
     //Save LocalizedWorld inverted matrix

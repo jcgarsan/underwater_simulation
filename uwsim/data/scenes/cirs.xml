@@ -69,7 +69,7 @@
       <y>0 </y>
       <z>0 </z>
     </lookAt>
-    <oculus> 1 </oculus>
+    <oculus> 0 </oculus>
     <windshield> 0 </windshield>
   </camera>
 
