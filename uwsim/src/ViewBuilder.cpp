@@ -364,6 +364,7 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
   wm->resizeAllWindows();
 
   viewer->setSceneData(appgroup);
+  viewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
 
   for (unsigned int j = 0; j < scene_builder->iauvFile.size(); j++)
     for (unsigned int i = 0; i < scene_builder->iauvFile[j]->devices->all.size(); i++)
