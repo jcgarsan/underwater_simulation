@@ -286,8 +286,8 @@
       <topic> /uwsim/girona500_odom_RAUVI </topic>
       <vehicleName> girona500_RAUVI </vehicleName>
     </PATToROSOdom>
-    <PATToROSOdom>
-<!--      <topic> /uwsim/girona500_odom_TRIDENT </topic>
+<!--    <PATToROSOdom>
+      <topic> /uwsim/girona500_odom_TRIDENT </topic>
       <vehicleName> girona500_TRIDENT </vehicleName>
     </PATToROSOdom> -->
     <WorldToROSTF>
