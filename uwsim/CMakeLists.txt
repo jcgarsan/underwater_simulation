@@ -42,6 +42,7 @@ catkin_package(
     tf
     underwater_sensor_msgs
     urdf
+    libopenni-dev
   DEPENDS
     boost
     libopenscenegraph
@@ -69,10 +70,12 @@ CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/uwsim/SimulatorConfig.h.cmake
 
 find_package(PkgConfig)
 pkg_check_modules(LIBXML++ REQUIRED libxml++-2.6)
+pkg_check_modules(OpenNI REQUIRED libopenni)
 
-INCLUDE_DIRECTORIES(include ${BULLET_INCLUDE_DIRS} ${OSGWORKS_INCLUDE_DIR} ${OSGBULLET_INCLUDE_DIR} ${OSGOCEAN_INCLUDE_DIRS} ${LIBXML++_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${OCULUS_SDK_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(include ${BULLET_INCLUDE_DIRS} ${OSGWORKS_INCLUDE_DIR} ${OSGBULLET_INCLUDE_DIR} ${OSGOCEAN_INCLUDE_DIRS}
+${LIBXML++_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${OCULUS_SDK_INCLUDE_DIRS} ${OpenNI_INCLUDE_DIRS})
 
-link_directories(${orocos_kdl_LIBRARY_DIRS})
+link_directories(${orocos_kdl_LIBRARY_DIRS} ${OpenNI_LIBRARIES})
 
 # this disables the warnings that come mostly from osg
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-ignored-qualifiers")
@@ -116,11 +119,11 @@ target_link_libraries(uwsim_plugins_simdev ${catkin_LIBRARIES})
 
 message("OPENSCENEGRAPH_LIBRARIES= ${OPENSCENEGRAPH_LIBRARIES}")
 
-target_link_libraries(uwsim -g ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OSGOCEAN_LIBRARIES} ${OSGWORKS_LIBRARIES} ${OSGBULLET_LIBRARIES} ${BULLET_LIBRARIES} ${OPENSCENEGRAPH_LIBRARIES} ${LIBXML++_LIBRARIES} ${OCULUS_SDK_LIBRARIES} -lGLU udev Xinerama)
+target_link_libraries(uwsim -g ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OSGOCEAN_LIBRARIES} ${OSGWORKS_LIBRARIES} ${OSGBULLET_LIBRARIES} ${BULLET_LIBRARIES} ${OPENSCENEGRAPH_LIBRARIES} ${LIBXML++_LIBRARIES} ${OCULUS_SDK_LIBRARIES} -lGLU udev Xinerama ${OpenNI_LIBRARIES})
 add_dependencies(uwsim underwater_sensor_msgs_gencpp)
 
 add_executable(uwsim_binary  src/main.cpp)
-target_link_libraries(uwsim_binary uwsim -g ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OSGOCEAN_LIBRARIES} ${OSGWORKS_LIBRARIES} ${OSGBULLET_LIBRARIES} ${BULLET_LIBRARIES} ${OPENSCENEGRAPH_LIBRARIES} ${LIBXML++_LIBRARIES} ${OCULUS_SDK_LIBRARIES} -lGLU udev Xinerama)
+target_link_libraries(uwsim_binary uwsim -g ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OSGOCEAN_LIBRARIES} ${OSGWORKS_LIBRARIES} ${OSGBULLET_LIBRARIES} ${BULLET_LIBRARIES} ${OPENSCENEGRAPH_LIBRARIES} ${LIBXML++_LIBRARIES} ${OCULUS_SDK_LIBRARIES} -lGLU udev Xinerama ${OpenNI_LIBRARIES})
 
 add_executable(makeVehicleSurvey interface_examples/makeVehicleSurvey.cpp)
 target_link_libraries(makeVehicleSurvey uwsim ${catkin_LIBRARIES} ${Boost_LIBRARIES})

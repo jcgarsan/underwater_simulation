@@ -19,6 +19,9 @@
 #include <osg/MatrixTransform>
 #include <osg/PositionAttitudeTransform>
 
+#include <osg/Point>
+
+
 /** Callback for updating the vehicle lamp according to the vehicle position */
 /*
  class LightUpdateCallback:public osg::NodeCallback {
@@ -355,10 +358,12 @@ public:
 
 		float angle;
 		if(_state == -1){
-			angle = 90;b = 0.7;
+			angle = 90+180;
+			b = 0.7;
 		}
 		else if (_state == 1){
-			angle = 90+180;b = 1;
+			angle = 90;
+			b = 1;
 		}
 
 		osg::Vec4Array* colors = new osg::Vec4Array;
@@ -819,6 +824,259 @@ osg::Group* createBarGauge(float width, float height, float percentage){
     return group;
 }
 
+/////////////////////////// JOAO
+#define SAMPLE_XML_PATH "/home/garciaju/SamplesConfig.xml"
+
+#define CHECK_RC(nRetVal, what)					    \
+    if (nRetVal != XN_STATUS_OK)				    \
+{								    \
+    printf("%s failed: %s\n", what, xnGetStatusString(nRetVal));    \
+    return nRetVal;						    \
+}
+
+XnBool fileExists(const char *fn)
+{
+	XnBool exists;
+	xnOSDoesFileExist(fn, &exists);
+	return exists;
+}
+
+Kinect::Kinect(osg::ref_ptr<osg::Vec3Array> vertices, osg::ref_ptr<osg::Vec4Array> colors, unsigned int * pointsI)
+{
+	float pclRot1 = 1;	//cos(0) = 1
+	float pclRot2 = 0;	//sin(0) = 0
+
+	pointsIndices = pointsI;
+	pointsXYZ = vertices;
+	pointsRGB = colors;
+}
+
+Kinect::~Kinect()
+{
+	g_scriptNode.Release();
+	g_DepthGenerator.Release();
+
+	g_ImageGenerator.Release();
+	g_Context.Release();
+}
+
+int Kinect::init()
+{
+	XnStatus nRetVal = XN_STATUS_OK;
+	xn::EnumerationErrors errors;
+
+	const char *fn = NULL;
+	if    (fileExists(SAMPLE_XML_PATH)) fn = SAMPLE_XML_PATH;
+	else {
+	printf("Could not find '%s'. Aborting.\n" , SAMPLE_XML_PATH);
+	return XN_STATUS_ERROR;
+	}
+	printf("Reading config from: '%s'\n", fn);
+
+	nRetVal = g_Context.InitFromXmlFile(fn, g_scriptNode, &errors);
+	if (nRetVal == XN_STATUS_NO_NODE_PRESENT)
+	{
+		XnChar strError[1024];
+		errors.ToString(strError, 1024);
+		printf("%s\n", strError);
+		return (nRetVal);
+	}
+	else if (nRetVal != XN_STATUS_OK)
+	{
+		printf("Open failed: %s\n", xnGetStatusString(nRetVal));
+		return (nRetVal);
+	}
+
+	nRetVal = g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);
+	CHECK_RC(nRetVal,"No depth");
+
+	nRetVal = g_Context.FindExistingNode(XN_NODE_TYPE_IMAGE, g_ImageGenerator);
+	CHECK_RC(nRetVal, "No color");
+
+	//calibrate depth camera to match RGB camera
+	xnSetViewPoint(g_DepthGenerator,g_ImageGenerator);
+
+	nRetVal = g_Context.StartGeneratingAll();
+	CHECK_RC(nRetVal, "StartGenerating");
+}
+
+void Kinect::update()
+{
+	//get the updated data from kinect
+	depthData = g_DepthGenerator.GetDepthMap();
+	imageData = g_ImageGenerator.GetRGB24ImageMap();
+	
+	pointsXYZ->clear();
+	pointsRGB->clear();
+
+	int x = 0;
+	int z = 0;
+
+	//this is to rotate the entire point cloud
+	pclRot1 = cos(DEG2RAD*kinectAngle);
+	pclRot2 = sin(DEG2RAD*kinectAngle);
+
+	//cycle through all points, insert them into the RGB array and insert them into the projective coordinates array (points2D)
+	for(int i=0; i<640*480; i++)
+	{
+		x++;
+		if(x == 640)
+		{
+			z++;
+			x=0;
+		}
+
+		//get depth data, place it on image plane and convert to real world coordinates
+		points2D[i].X = x;
+		points2D[i].Y = z;
+		points2D[i].Z = depthData[i];
+
+		//get RGB data
+		pointsRGB->push_back(osg::Vec4f(imageData[i].nRed/255.0, imageData[i].nGreen/255.0, imageData[i].nBlue/255.0,1.0f));
+
+		pointsIndices[i] = i; //add this point to list of points to draw
+	}
+ 	
+	//convert the whole projective coordinates array into real world coordinates (points3D)
+	g_DepthGenerator.ConvertProjectiveToRealWorld(307200, points2D, points3D);
+
+	//apply kinect->openAR transform and rotate all points matching kinect/table angle
+	for(int i=0; i<640*480; i++)
+	{
+		pointsXYZ->push_back( osg::Vec3f(points3D[i].X/1000.0, (-points3D[i].Z*pclRot1 - points3D[i].Y*pclRot2)/1000.0, (-points3D[i].Z*pclRot2 + points3D[i].Y*pclRot1)/1000.0));
+	}
+}
+
+//this function performs a 3DHough transform to detect the angle that the kinect is making with the scene's
+//biggest plane (the table). It then returns and object with the plane's spherical coordinates.
+//The value of Phi is then used to define "kinectAngle" which is used to rotate the point cloud
+/*TableTransform Kinect::tableDetection()
+{
+	float tolerance = 0.001;
+	
+	float thetaStep = 0.1;
+	float phiStep = 0.005;
+	float rohStep = 2;
+	float rohRange = 600;
+	float rohStart = 400;
+
+	int nTheta = (2*M_PI)/thetaStep;
+	int nPhi = M_PI/phiStep;
+	int nRoh = rohRange/rohStep;
+
+	printf("nTheta:%d nPhi:%d nRoh:%d\n", nTheta, nPhi, nRoh);
+
+	float theta[nTheta];
+	float phi[nPhi];
+	float roh[nRoh];
+
+	//  Allocate 3D Array
+	int ***accGrid = new int**[nTheta];
+	for(int i = 0; i < nTheta; i++)
+	{
+		accGrid[i] = new int*[nPhi];
+
+		for(int j = 0; j < nPhi; j++)
+		{
+		    accGrid[i][j] = new int[nRoh];
+		}
+	}
+
+	for(int i=0; i<nTheta; i++)
+	{
+		theta[i] = i*thetaStep;
+	}
+
+	for(int i=0; i<nPhi; i++)
+	{
+		phi[i] = i*phiStep;
+	}
+
+	for(int i=0; i<nRoh; i++)
+	{
+		roh[i] = i*rohStep+rohStart;
+	}
+
+	for(int j=0; j<nTheta; j++)
+	{
+		for(int k=0; k<nPhi; k++)
+		{
+			for(int l=0; l<nRoh; l++)
+			{
+				accGrid[j][k][l] = 0;					
+			}
+		}
+	}
+
+	float calculatedRoh;
+	float result;
+
+	for(int i=0; i<640*480; i+=400)
+	{
+		for(int j=0; j<nTheta; j++)
+		{
+			for(int k=0; k<nPhi; k++)
+			{
+				calculatedRoh = pointsXYZ[i].x*cos(theta[j])*sin(phi[k])+pointsXYZ[i].y*sin(phi[k])*sin(theta[j])+pointsXYZ[i].z*cos(phi[k]);
+
+				for(int l=0; l<nRoh; l++)
+				{
+					result = (calculatedRoh)/roh[l];
+
+					if(result <= 1+tolerance && result >= 1-tolerance)
+					{
+						accGrid[j][k][l] ++;						
+					}
+				}
+			}
+		}
+	}
+
+	int max = 0;
+	int maxJ,maxK,maxL;
+
+	for(int j=0; j<nTheta; j++)
+	{
+		for(int k=0; k<nPhi; k++)
+		{
+			for(int l=0; l<nRoh; l++)
+			{
+				if(accGrid[j][k][l] > max)
+				{
+					max = accGrid[j][k][l];
+					maxJ = j;
+					maxK = k;
+					maxL = l;
+				}
+			}
+		}
+	}
+
+	printf("\n\ntheta: %f phi: %f roh: %f \nj: %d k: %d l: %d max: %d \n\n",theta[maxJ], phi[maxK], roh[maxL], maxJ, maxK, maxL, max);
+	printf("theta(degrees): %f phi(degrees): %f\n",theta[maxJ]/DEG2RAD, phi[maxJ]/DEG2RAD);
+
+	//deallocate 3d array
+	for(int i = 0; i < nTheta; i++)
+	{
+		for(int j = 0; j < nPhi; j++)
+		{
+			delete[] accGrid[i][j];
+		}
+
+		delete[] accGrid[i];
+	}
+	delete[] accGrid;
+
+	table.phi = phi[maxK]/DEG2RAD;
+	table.theta = theta[maxJ]/DEG2RAD;
+	table.roh = roh[maxL];
+
+	kinectAngle = 180-table.phi;
+
+	return table;
+}*/
+/////////////////////////
+
 //////////////////////////////////////////////////////////////////////////////
 
 SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(new URDFRobot(oscene->scene->getOceanScene(), vehicleChars))
@@ -879,6 +1137,50 @@ SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(
 	baseTransform->addChild(createBox(osg::Vec3(1.1,0,1.3),0.5,1.5,0.07,osg::Vec4(0.2,0.2,0.2,1)));
 //	baseTransform->addChild(createBox(osg::Vec3(0,0,0),3,3,3,osg::Vec4(1,1,1,0.1)));
 	baseTransform->addChild(transform_);
+	
+	vertices = osg::ref_ptr < osg::Vec3Array > (new osg::Vec3Array());
+	colors = osg::ref_ptr < osg::Vec4Array > (new osg::Vec4Array());
+	
+/*    kinect= new Kinect(vertices,colors,pointsIndices);
+	kinect->init();
+	kinect->update();
+	
+	geode = osg::ref_ptr < osg::Geode > (new osg::Geode());
+    geometry = osg::ref_ptr < osg::Geometry > (new osg::Geometry());
+
+    geometry->setVertexArray(vertices);
+    geometry->setColorArray(colors);
+    geometry->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
+
+    geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POINTS, 0, 307200));
+
+    geode->addDrawable(geometry.get());
+    osg::StateSet* state = geometry->getOrCreateStateSet();
+    state->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+
+    osg::Point *point = new osg::Point;
+    point->setSize(2);
+    state->setAttribute(point);
+           
+    geode->setUpdateCallback(new KinectCallback(kinect,geometry));
+    
+   	osg::MatrixTransform* kinectTransform =  new osg::MatrixTransform();
+   	osg::Matrixd  kinectMatrix ;
+   	
+   	kinectMatrix.makeRotate(osg::Quat(3.14, osg::Vec3d(1, 0, 0), 0, osg::Vec3d(0, 1, 0), -1.57,osg::Vec3d(0, 0, 1)));
+
+    kinectTransform->setMatrix(kinectMatrix);
+    kinectTransform->addChild(geode);
+    
+    geode->setNodeMask(0x04 | 0x02 | 0x01);
+    
+    baseTransform->addChild(kinectTransform);*/
+
+	
+
+	
+
+	
     }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -60,7 +60,7 @@
     <far> 10000 </far>			<!-- 300 -->
     <position>				<!-- 16, 9, -7 -->
       <x> 0 </x>
-      <y> 0 </y>
+      <y> 2 </y>
       <z> 0 </z>
     </position>				<!-- 5, 7, -10 -->
     <lookAt>
@@ -68,7 +68,7 @@
       <y> 0.1 </y>
       <z> 0 </z>
     </lookAt>
-    <oculus> 0 </oculus>
+    <oculus> 1 </oculus>
     <windshield> 0 </windshield>
   </camera>
 
