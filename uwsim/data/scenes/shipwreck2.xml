@@ -53,22 +53,22 @@
 
   <camera>
     <freeMotion> 0 </freeMotion>	<!-- 1 -->
-    <objectToTrack>girona500_RAUVI/base_link</objectToTrack>
+    <objectToTrack>girona500_RAUVI</objectToTrack>
     <fov> 60 </fov>
     <aspectRatio> 1.33 </aspectRatio>
     <near> 1 </near>
     <far> 10000 </far>			<!-- 300 -->
     <position>				<!-- 16, 9, -7 -->
-      <x> 0 </x>
-      <y> 2 </y>
+      <x> -0.3 </x>			<!-- 0, 2, 0 -->
+      <y> 0 </y>
       <z> 0 </z>
-    </position>				<!-- 5, 7, -10 -->
-    <lookAt>
-      <x> 0.3 </x>
-      <y> 0.1 </y>
+    </position>
+    <lookAt>				<!-- 5, 7, -10 -->
+      <x> 0 </x>			<!-- 0.3, 0.1, 0 -->
+      <y> 0 </y>
       <z> 0 </z>
     </lookAt>
-    <oculus> 0 </oculus>
+    <oculus> 1 </oculus>
     <windshield> 0 </windshield>
   </camera>
 
