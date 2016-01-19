@@ -40,7 +40,7 @@
 /* #undef BUILD_BULLET_PHYSICS */
 
 //UWSim root folder
-#define UWSIM_ROOT_PATH "/home/garciaju/catkin-ws/install/share/uwsim"
+#define UWSIM_ROOT_PATH "/home/garciaju/catkin/install/share/uwsim"
 
 //Operating system
 /* #undef WIN32 */

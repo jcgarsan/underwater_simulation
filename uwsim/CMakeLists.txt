@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   urdf
 )
 
+
 find_package(uwsim_osgocean REQUIRED)
 find_package(uwsim_osgworks REQUIRED)
 find_package(uwsim_osgbullet REQUIRED)
@@ -55,6 +56,11 @@ catkin_package(
 	libxinerama-dev
 	roslib
 )
+
+
+MESSAGE("uwsim INCLUDES =)")
+
+MESSAGE(${catkin_INCLUDE_DIRS})
 
 find_package(Boost REQUIRED thread program_options system filesystem)
 

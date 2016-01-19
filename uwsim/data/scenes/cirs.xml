@@ -93,7 +93,7 @@
       <p>0</p>
       <y>0</y>
     </orientation>
-<!--    <virtualCamera>
+    <virtualCamera>
       <name>bowtech1</name>
       <relativeTo>part0</relativeTo>
       <resw> 320 </resw>
@@ -108,8 +108,6 @@
         <p>0</p>
         <y>1.57 </y>
       </orientation>
-      draws the FOV of the camera projected on the scene each 2 seconds //comentar
-      <showpath>2</showpath>   //comentar
     </virtualCamera>
     <virtualCamera>
       <name>bowtech2</name>
@@ -126,7 +124,7 @@
         <p>0</p>
         <y>1.57 </y>
       </orientation>
-    </virtualCamera> -->
+    </virtualCamera>
     <rangeSensor>
       <name>sonar</name>
       <relativeTo>part0</relativeTo>

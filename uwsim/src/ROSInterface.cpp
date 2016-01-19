@@ -974,7 +974,7 @@ void WorldToROSTF::publish()
       // Publish moving joints
       robot_pubs_[i]->RobotStatePublisher::publishTransforms(iauvFile_[i].get()->urdf->getFullJointMap(), getROSTime(), iauvFile_[i].get()->name);
       // Publish fixed joints
-      robot_pubs_[i]->RobotStatePublisher::publishFixedTransforms(iauvFile_[i].get()->name);
+      robot_pubs_[i]->RobotStatePublisher::publishFixedTransforms(iauvFile_[i].get()->name, true);
       //Publish odometry
       if (transforms_[i] != NULL)
       {

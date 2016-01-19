@@ -21,6 +21,8 @@
 
 #include <osg/Point>
 
+#define pressureThreshold	0.5
+
 
 /** Callback for updating the vehicle lamp according to the vehicle position */
 /*
@@ -317,7 +319,8 @@ public:
     void robotZCallback(const nav_msgs::Odometry::ConstPtr& odom)
 	{
 		// the movement is inverted!
-		if(abs(_z-odom->pose.pose.position.z) < 0.001)
+//		if(abs(_z-odom->pose.pose.position.z) < 0.001)	//Original by Joao
+		if(abs(_z-odom->pose.pose.position.z) < 0.01)
 			_state = 0;
 		else if(_z < odom->pose.pose.position.z)
 			_state = 1;
@@ -391,7 +394,7 @@ class pressureWarningCallback : public osg::NodeCallback
 public:
 void pressureSensorCallback(const underwater_sensor_msgs::Pressure::ConstPtr& pressureValue)
 	{
-	        if (pressureValue->pressure > -2)
+	    if (abs(pressureValue->pressure) < pressureThreshold)//(pressureValue->pressure > -2)
 			_state = 1;
 		else
 			_state = 0;
