@@ -27,6 +27,7 @@
 #include "MultibeamSensor.h"
 
 #include <nav_msgs/Odometry.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <underwater_sensor_msgs/Pressure.h>
 
 #include <XnCppWrapper.h>

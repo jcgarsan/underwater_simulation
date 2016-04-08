@@ -96,7 +96,7 @@
 #include <osg/PolygonMode>
 
 #include <osg/NodeVisitor>
-    #include <osg/Node>
+#include <osg/Node>
 
 /*
 #include <osgDB/ReadFile>
@@ -189,6 +189,7 @@ public:
 		_x = posstamped->pose.position.z;
 		_y = posstamped->pose.position.x;
 		_z = posstamped->pose.position.y;
+		cout << "_x = " << _x << "; _y = " << _y << "; _z = " << _z << endl;
 
 		if(_px == _x && _py == _y && _pz == _z){
 			_x = _y = 0; _z = 100;
@@ -200,22 +201,48 @@ public:
 			_pz = _z;
 			_stop = 0;
 		}		
+	} 
+
+    void virtual_joy_Callback(const std_msgs::Float64MultiArray::ConstPtr& thrusterArray)
+	{
+		_x = thrusterArray->data[0] * 100;
+		_y = thrusterArray->data[4] * 100;
+		_z = 100;
+		//_z = thrusterArray->data[2] * 100;
+		cout << "_x = " << _x << "; _y = " << _y << "; _z = " << _z << endl;
+
+		/*if(_px == _x && _py == _y && _pz == _z){
+			_x = _y = 0; _z = 100;
+			_stop = 1;
+		}
+		else{
+			_px = _x;
+			_py = _y;
+			_pz = _z;
+			_stop = 0;
+		}*/
+		_stop = 0;
 	}
+
 
     // Override the constructor
     virtualHandleCallback(){
         _x = _y = _z = 0;
-		leap_sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("leap_tracker/pose_stamped_out", 1,\
+//		leap_sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("leap_tracker/pose_stamped_out", 1,\
 												 &virtualHandleCallback::leapCallback, this);
+		virtual_joy_sub_ = nh_.subscribe<std_msgs::Float64MultiArray>("g500/thrusters_input", 1,\
+												 &virtualHandleCallback::virtual_joy_Callback, this);
     };
     void operator()(osg::Node* node, osg::NodeVisitor* nv){
         
         osg::Group* currGroup = node->asGroup();
         osg::Node* foundNode;
         
-        float size = sqrtf(_x*_x + _y*_y + _z*_z)/500;
-	if (size < 0.17)
-		size = 0.17;
+        /*float size = sqrtf(_x*_x + _y*_y + _z*_z)/500;
+		if (size < 0.17)
+			size = 0.17;*/
+		float size = 0.5;
+		//cout << "size = " << size << endl;
         
         if (currGroup) {
             for (unsigned int i = 0 ; i < currGroup->getNumChildren(); i ++)
@@ -267,7 +294,8 @@ private:
     float _px, _py, _pz;
 	bool _stop;
 	ros::NodeHandle nh_;
-	ros::Subscriber leap_sub_;
+	ros::Subscriber virtual_joy_sub_;
+	//ros::Subscriber leap_sub_;
 };
 
 osg::Group* createVirtualHandle(){
