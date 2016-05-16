@@ -209,18 +209,7 @@ public:
 		_y = thrusterArray->data[4] * 100;
 		_z = 100;
 		//_z = thrusterArray->data[2] * 100;
-		cout << "_x = " << _x << "; _y = " << _y << "; _z = " << _z << endl;
-
-		/*if(_px == _x && _py == _y && _pz == _z){
-			_x = _y = 0; _z = 100;
-			_stop = 1;
-		}
-		else{
-			_px = _x;
-			_py = _y;
-			_pz = _z;
-			_stop = 0;
-		}*/
+		//cout << "_x = " << _x << "; _y = " << _y << "; _z = " << _z << endl;
 		_stop = 0;
 	}
 
