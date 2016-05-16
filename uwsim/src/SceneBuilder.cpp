@@ -143,6 +143,21 @@ bool SceneBuilder::loadScene(ConfigFile config)
     scene->getOceanScene()->enableGodRays(false); // Could be done in fixed pipeline?
     scene->getOceanScene()->enableSilt(false); // Could be done in fixed pipeline?
   }
+  else //Use UWSim default scene shader
+  {
+   static const char model_vertex[] = "default_scene.vert";
+   static const char model_fragment[] = "default_scene.frag";
+   osg::Program* program = osgOcean::ShaderManager::instance().createProgram("object_shader", model_vertex,model_fragment, "", "");
+   scene->getOceanScene()->setDefaultSceneShader(program);
+
+   root->getOrCreateStateSet()->addUniform(new osg::Uniform("uOverlayMap", 1));
+   root->getStateSet()->addUniform(new osg::Uniform("uNormalMap", 2));
+   root->getStateSet()->addUniform(new osg::Uniform("SLStex", 3));
+   root->getStateSet()->addUniform(new osg::Uniform("SLStex2", 4));
+   root->getStateSet()->addUniform( new osg::Uniform("stddev", 0.0f ) );
+   root->getStateSet()->addUniform( new osg::Uniform("mean", 0.0f ) );
+   root->getStateSet()->addUniform( new osg::Uniform("light", (float)config.lightRate ) );
+  }
 
   scene->getOceanScene()->setOceanSurfaceHeight(oceanSurfaceHeight);
   scene->getOceanScene()->setUnderwaterFog(config.fogDensity,
@@ -153,6 +168,7 @@ bool SceneBuilder::loadScene(ConfigFile config)
 
   //Add config file iauv
   int nvehicle = config.vehicles.size();
+  int slsProjectors=0;
   for (int i = 0; i < nvehicle; i++)
   {
     Vehicle vehicle = config.vehicles.front();
@@ -176,6 +192,17 @@ bool SceneBuilder::loadScene(ConfigFile config)
       siauv->urdf->setJointPosition(vehicle.jointValues);
     }
 
+    slsProjectors+=vehicle.sls_projectors.size();
+  }
+
+  //Enable or disable sls shader computation
+  if(slsProjectors==0)
+  {
+    root->getOrCreateStateSet()->addUniform(new osg::Uniform("sls_projector", false));
+  }
+  else
+  {
+    root->getOrCreateStateSet()->addUniform(new osg::Uniform("sls_projector", true));
   }
 
   //Add objects added in config file.
@@ -205,6 +232,13 @@ bool SceneBuilder::loadScene(ConfigFile config)
       NodeDataType * data = new NodeDataType(0);
       object->setUserData(data);
     }
+
+    if (auxObject.buried>0) //If object is buried create a reactive heightfield 
+    {
+      osg::Node* mud=createHeightField(object,"sand2.jpg",auxObject.buried, iauvFile);
+      object->asGroup()->addChild(mud);
+    }  
+
     objects.push_back(object);
     config.objects.pop_front();
   }
@@ -254,7 +288,13 @@ bool SceneBuilder::loadScene(ConfigFile config)
     if (rosInterface.type == ROSInterfaceInfo::WorldToROSTF)
     {
       iface = boost::shared_ptr < WorldToROSTF
-          > (new WorldToROSTF(root, iauvFile, objects, rosInterface.rootName, rosInterface.enableObjects, rosInterface.rate));
+          > (new WorldToROSTF( this, rosInterface.rootName, rosInterface.enableObjects, rosInterface.rate));
+
+    }
+    if (rosInterface.type == ROSInterfaceInfo::ROSPointCloudLoader)
+    {
+      iface = boost::shared_ptr < ROSPointCloudLoader
+          > (new ROSPointCloudLoader(rosInterface.topic,root,scene->getOceanScene()->getARMask(),rosInterface.del));
 
     }
     if (rosInterface.type == ROSInterfaceInfo::ROSJointStateToArm
@@ -292,6 +332,26 @@ bool SceneBuilder::loadScene(ConfigFile config)
             iface = boost::shared_ptr < VirtualCameraToROSImage
                 > (new VirtualCameraToROSImage(&(iauvFile[j]->camview[c]), rosInterface.topic, rosInterface.infoTopic,
                                                rosInterface.rate, rosInterface.depth));
+	    correspondences++;
+	  }
+      }
+      if(correspondences==0)
+        ROS_WARN ("VirtualCameraToROSInterface is not able to find %s camera.",rosInterface.targetName.c_str());
+      else if (correspondences > 1)
+        ROS_WARN ("VirtualCameraToROSInterface more than one %s cameras.",rosInterface.targetName.c_str());
+    }
+
+    if (rosInterface.type == ROSInterfaceInfo::RangeCameraToPCL)
+    {
+      int correspondences=0;
+      //Find corresponding VirtualCamera Object on all the vehicles
+      for (int j = 0; j < nvehicle; j++)
+      {
+        for (unsigned int c = 0; c < iauvFile[j]->getNumCams(); c++)
+          if (iauvFile[j]->camview[c].name == rosInterface.targetName)
+	  {
+            iface = boost::shared_ptr < RangeCameraToPCL
+                > (new RangeCameraToPCL(&(iauvFile[j]->camview[c]), rosInterface.topic,rosInterface.rate));
 	    correspondences++;
 	  }
       }
@@ -487,12 +547,15 @@ bool SceneBuilder::loadScene(ConfigFile config)
   {
     ShowTrajectory trajectory = config.trajectories.front();
 
-    osg::ref_ptr<TrajectoryUpdateCallback> node_tracker = new TrajectoryUpdateCallback(trajectory.color, 0.02,trajectory.lineStyle, \
-						root, scene->getOceanScene()->getNormalSceneMask() | scene->getOceanScene()->getReflectedSceneMask() | \
-						scene->getOceanScene()->getRefractedSceneMask());
+    osg::ref_ptr<TrajectoryUpdateCallback> node_tracker = new TrajectoryUpdateCallback(trajectory.color, 0.02,trajectory.lineStyle,
+        trajectory.timeWindow, root, scene->getOceanScene()->getARMask());
+
     osg::Node * trackNode=findRN(trajectory.target,root);
     if(trackNode)
+    {
       trackNode->setUpdateCallback(node_tracker);
+      trajectories.push_back(trackNode);
+    }
     else
       OSG_FATAL << "Scene Builder: "<<trajectory.target<<" trajectory target not found, please check your XML."<<std::endl;
 

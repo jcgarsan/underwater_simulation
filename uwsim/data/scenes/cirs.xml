@@ -57,7 +57,7 @@
     <objectToTrack>girona500/base_link</objectToTrack>
     <fov> 60 </fov>
     <aspectRatio> 1.33 </aspectRatio>
-    <near> 1 </near>
+    <near> 0.1 </near>
     <far> 10000 </far>
     <position>
       <x>-5</x>
@@ -105,7 +105,7 @@
       </position>
       <orientation>
         <r>0</r>
-        <p>0</p>
+        <p>3.14</p>
         <y>1.57 </y>
       </orientation>
     </virtualCamera>
@@ -121,7 +121,7 @@
       </position>  
       <orientation>
         <r>0</r>
-        <p>0</p>
+        <p>3.14</p>
         <y>1.57 </y>
       </orientation>
     </virtualCamera>
@@ -137,7 +137,7 @@
       </position>  
       <orientation>
         <r>0</r>
-        <p>1.57</p>
+        <p>-1.57</p>
         <y>0</y>
       </orientation>
     </rangeSensor>
@@ -201,7 +201,7 @@
       <orientation>
         <r>0</r>
         <p>0</p>
-        <y>3.9269908169872414</y>
+        <y>M_PI</y>
       </orientation>
       <std>0.0015</std>
     </dvlSensor>
@@ -218,7 +218,7 @@
       </position>  
       <orientation>
         <r>0</r>
-        <p>0</p>
+        <p>3.14</p>
         <y>1.57 </y>
       </orientation>
       <parameters>
@@ -242,7 +242,7 @@
         <z> 0 </z>
       </position>  
       <orientation>
-        <r>0</r>
+        <r>3.14</r>
         <p>0</p>
         <y>3.14 </y>
       </orientation>

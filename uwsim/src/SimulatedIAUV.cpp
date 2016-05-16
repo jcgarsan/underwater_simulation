@@ -1219,10 +1219,10 @@ SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(
     vMc->asPositionAttitudeTransform()->setAttitude(
         osg::Quat(vcam.orientation[0], osg::Vec3d(1, 0, 0), vcam.orientation[1], osg::Vec3d(0, 1, 0),
                   vcam.orientation[2], osg::Vec3d(0, 0, 1)));
-    urdf->link[vcam.link]->asGroup()->addChild(vMc);
+    urdf->link[vcam.link]->getParent(0)->getParent(0)->asGroup()->addChild(vMc);
     camview.push_back(
-        VirtualCamera(oscene->root, vcam.name, vMc, vcam.resw, vcam.resh, vcam.baseLine, vcam.frameId,
-                      vcam.parameters.get(), 0, vcam.bw));
+        VirtualCamera(oscene->root, vcam.name, vcam.linkName, vMc, vcam.resw, vcam.resh, vcam.baseLine, vcam.frameId,
+                      vcam.fov,oscene,vcam.std,vcam.parameters.get(), 0, vcam.bw));
     if (vcam.showpath)
       camview[camview.size() - 1].showPath(vcam.showpath);
     OSG_INFO << "Done adding a virtual camera..." << std::endl;
@@ -1241,12 +1241,15 @@ SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(
     vMc->asPositionAttitudeTransform()->setAttitude(
         osg::Quat(vcam.orientation[0], osg::Vec3d(1, 0, 0), vcam.orientation[1], osg::Vec3d(0, 1, 0),
                   vcam.orientation[2], osg::Vec3d(0, 0, 1)));
-    urdf->link[vcam.link]->asGroup()->addChild(vMc);
+    urdf->link[vcam.link]->getParent(0)->getParent(0)->asGroup()->addChild(vMc);
     camview.push_back(
-        VirtualCamera(oscene->root, vcam.name, vMc, vcam.resw, vcam.resh, vcam.baseLine, vcam.frameId,
-                      vcam.parameters.get(), 1, 0));
+        VirtualCamera(oscene->root, vcam.name, vcam.linkName, vMc, vcam.resw, vcam.resh, vcam.baseLine, vcam.frameId,
+                      vcam.fov,NULL,0,vcam.parameters.get(), 1, 0));
     if (vcam.showpath)
       camview[camview.size() - 1].showPath(vcam.showpath);
+    //Check underwaterParticles to change the mask
+    if (!vcam.underwaterParticles)
+      camview[camview.size() - 1].textureCamera->setCullMask(oscene->scene->getOceanScene()->getNormalSceneMask());
     OSG_INFO << "Done adding a virtual camera..." << std::endl;
   }
 
@@ -1262,9 +1265,9 @@ SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(
     vMp->asPositionAttitudeTransform()->setAttitude(
         osg::Quat(slp.orientation[0], osg::Vec3d(1, 0, 0), slp.orientation[1], osg::Vec3d(0, 1, 0), slp.orientation[2],
                   osg::Vec3d(0, 0, 1)));
-    urdf->link[slp.link]->asGroup()->addChild(vMp);
+    urdf->link[slp.link]->getParent(0)->getParent(0)->asGroup()->addChild(vMp);
     //camview.push_back(VirtualCamera(oscene->root, "slp_camera", vMp, 512, 512,slp.fov,102.4));
-    sls_projectors.push_back(VirtualSLSProjector(slp.name, oscene->root, //maybe oscene->scene->localizedWorld ?
+    sls_projectors.push_back(VirtualSLSProjector(slp.name, slp.linkName, oscene->root, //maybe oscene->scene->localizedWorld ?
                                                  vMp, slp.image_name, slp.fov, (slp.laser) ? true : false));
     camview.push_back(sls_projectors.back().camera);
     OSG_INFO << "Done adding a structured light projector..." << std::endl;
@@ -1282,9 +1285,10 @@ SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(
     vMr->asPositionAttitudeTransform()->setAttitude(
         osg::Quat(rs.orientation[0], osg::Vec3d(1, 0, 0), rs.orientation[1], osg::Vec3d(0, 1, 0), rs.orientation[2],
                   osg::Vec3d(0, 0, 1)));
-    urdf->link[rs.link]->asGroup()->addChild(vMr);
+    urdf->link[rs.link]->getParent(0)->getParent(0)->asGroup()->addChild(vMr);
     range_sensors.push_back(
-        VirtualRangeSensor(rs.name, oscene->scene->localizedWorld, vMr, rs.range, (rs.visible) ? true : false));
+        VirtualRangeSensor(rs.name, rs.linkName, oscene->scene->localizedWorld, vMr, rs.range, (rs.visible) ? true : false,
+        oscene->scene->getOceanScene()->getARMask()));
     OSG_INFO << "Done adding a virtual range sensor..." << std::endl;
   }
 
@@ -1301,7 +1305,7 @@ SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(
         osg::Quat(imu.orientation[0], osg::Vec3d(1, 0, 0), imu.orientation[1], osg::Vec3d(0, 1, 0), imu.orientation[2],
                   osg::Vec3d(0, 0, 1)));
     urdf->link[imu.link]->getParent(0)->getParent(0)->asGroup()->addChild(vMi);
-    imus.push_back(InertialMeasurementUnit(imu.name, vMi, oscene->scene->localizedWorld->getMatrix(), imu.std));
+    imus.push_back(InertialMeasurementUnit(imu.name, imu.linkName, vMi, oscene->scene->localizedWorld->getMatrix(), imu.std));
     OSG_INFO << "Done adding an IMU..." << std::endl;
   }
 
@@ -1318,7 +1322,7 @@ SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(
         osg::Quat(ps.orientation[0], osg::Vec3d(1, 0, 0), ps.orientation[1], osg::Vec3d(0, 1, 0), ps.orientation[2],
                   osg::Vec3d(0, 0, 1)));
     urdf->link[ps.link]->getParent(0)->getParent(0)->asGroup()->addChild(vMs);
-    pressure_sensors.push_back(PressureSensor(ps.name, vMs, oscene->scene->localizedWorld->getMatrix(), ps.std));
+    pressure_sensors.push_back(PressureSensor(ps.name, ps.linkName, vMs, oscene->scene->localizedWorld->getMatrix(), ps.std));
     OSG_INFO << "Done adding an Pressure Sensor..." << std::endl;
   }
 
@@ -1335,7 +1339,7 @@ SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(
         osg::Quat(ps.orientation[0], osg::Vec3d(1, 0, 0), ps.orientation[1], osg::Vec3d(0, 1, 0), ps.orientation[2],
                   osg::Vec3d(0, 0, 1)));
     urdf->link[ps.link]->getParent(0)->getParent(0)->asGroup()->addChild(vMs);
-    gps_sensors.push_back(GPSSensor(oscene->scene, ps.name, vMs, oscene->scene->localizedWorld->getMatrix(), ps.std));
+    gps_sensors.push_back(GPSSensor(oscene->scene, ps.name, ps.linkName , vMs, oscene->scene->localizedWorld->getMatrix(), ps.std));
     OSG_INFO << "Done adding an GPS Sensor..." << std::endl;
   }
 
@@ -1352,7 +1356,7 @@ SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(
         osg::Quat(ps.orientation[0], osg::Vec3d(1, 0, 0), ps.orientation[1], osg::Vec3d(0, 1, 0), ps.orientation[2],
                   osg::Vec3d(0, 0, 1)));
     urdf->link[ps.link]->getParent(0)->getParent(0)->asGroup()->addChild(vMs);
-    dvl_sensors.push_back(DVLSensor(ps.name, vMs, oscene->scene->localizedWorld->getMatrix(), ps.std));
+    dvl_sensors.push_back(DVLSensor(ps.name, ps.linkName, vMs, oscene->scene->localizedWorld->getMatrix(), ps.std));
     OSG_INFO << "Done adding an DVL Sensor..." << std::endl;
   }
 
@@ -1369,10 +1373,16 @@ SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(
         osg::Quat(MB.orientation[0], osg::Vec3d(1, 0, 0), MB.orientation[1], osg::Vec3d(0, 1, 0), MB.orientation[2],
                   osg::Vec3d(0, 0, 1)));
     urdf->link[MB.link]->getParent(0)->getParent(0)->asGroup()->addChild(vMs);
-    MultibeamSensor mb = MultibeamSensor(oscene->root, MB.name, vMs, MB.initAngle, MB.finalAngle, MB.angleIncr,
-                                         MB.range);
+    unsigned int mask;
+    if(MB.underwaterParticles)
+      mask=oscene->scene->getOceanScene()->getARMask();
+    else
+      mask=oscene->scene->getOceanScene()->getNormalSceneMask(); //Normal Scene mask should be enough for range sensor
+    MultibeamSensor mb = MultibeamSensor(oscene->root, MB.name, MB.linkName, vMs, MB.initAngle, MB.finalAngle, MB.angleIncr,
+                                         MB.range,mask,MB.visible,mask);
     multibeam_sensors.push_back(mb);
-    camview.push_back(mb);
+    for(unsigned int i=0;i<mb.nCams;i++)
+      camview.push_back(mb.vcams[i]);
     OSG_INFO << "Done adding a Multibeam Sensor..." << std::endl;
   }
 
@@ -1390,7 +1400,8 @@ SimulatedIAUV::SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicleChars) : urdf(
                   osg::Vec3d(0, 0, 1)));
     vMr->setName("ObjectPickerNode");
     urdf->link[rs.link]->asGroup()->addChild(vMr);
-    object_pickers.push_back(ObjectPicker(rs.name, oscene->scene->localizedWorld, vMr, rs.range, true, urdf));
+    object_pickers.push_back(ObjectPicker(rs.name, oscene->scene->localizedWorld, vMr, rs.range, true, urdf,
+        oscene->scene->getOceanScene()->getARMask()));
     OSG_INFO << "Done adding an object picker..." << std::endl;
   }
 

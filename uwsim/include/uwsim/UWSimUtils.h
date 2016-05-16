@@ -25,6 +25,7 @@
 #include <osgDB/Registry>
 #include <osgDB/FileNameUtils>
 #include <osg/Version>
+#include <osgText/Text>
 
 #include <btBulletDynamicsCommon.h>
 
@@ -135,17 +136,14 @@ class UWSimGeometry
 {
 public:
   static osg::Node* createFrame(double radius = 0.015, double length = 0.2);
-  static osg::Node* createSwitchableFrame(double radius = 0.015, double length = 0.2);
+  static osg::Node* createSwitchableFrame(double radius = 0.015, double length = 0.2, unsigned int mask=0x40);
   static osg::Node* createOSGBox(osg::Vec3 size);
   static osg::Node* createOSGCylinder(double radius, double height);
   static osg::Node* createOSGSphere(double radius);
+  static osg::Node* createLabel(std::string text,double charSize=0.02, int bb=1, osg::Vec4 color=osg::Vec4(1,1,1,1) );
 
   static osg::Node * retrieveResource(std::string name);
   static osg::Node * loadGeometry(boost::shared_ptr<Geometry> geom);
-
-  /** Apply osgOcean-based state sets to a node */
-  static void applyStateSets(osg::Node*);
-
 private:
 
 };
@@ -190,5 +188,31 @@ private:
   nodeListType foundNodeList;
 };
 
+//Dredging
+
+
+//This is an abstract Dredge interface that must be implemented by devices to be used with a dynamicHF.
+//By default Dredge Tool will be used.
+class AbstractDredgeTool 
+{
+  public:
+    // The coordinates must be in world coordinates
+    virtual boost::shared_ptr<osg::Matrix> getDredgePosition() =0;
+    // This function will be called each iteration with an estimation of the number of dredged particles
+    virtual void dredgedParticles(int nparticles) =0;
+};
+
+class DynamicHF : public osg::Drawable::UpdateCallback
+{
+  public:
+    DynamicHF(osg::HeightField* heightField, boost::shared_ptr<osg::Matrix> mat,  std::vector<boost::shared_ptr<AbstractDredgeTool> > tools);
+    virtual void update( osg::NodeVisitor*, osg::Drawable*drawable );
+  private:
+    osg::HeightField* heightField;
+    boost::shared_ptr<osg::Matrix> objectMat;
+    std::vector<boost::shared_ptr<AbstractDredgeTool> > dredgeTools;
+};
+
+osg::Node* createHeightField(osg::ref_ptr<osg::Node> object, std::string texFile, double percent,  const std::vector<boost::shared_ptr<SimulatedIAUV> >  vehicles);
 #endif
 
