@@ -23,13 +23,13 @@ ObjectPicker::ObjectPicker() :
 }
 
 ObjectPicker::ObjectPicker(std::string name, osg::Node *root, osg::Node *trackNode, double range, bool visible,
-                           boost::shared_ptr<URDFRobot> urdf)
+                           boost::shared_ptr<URDFRobot> urdf,unsigned int mask)
 {
-  init(name, root, trackNode, range, visible, urdf);
+  init(name, root, trackNode, range, visible, urdf, mask);
 }
 
 void ObjectPicker::init(std::string name, osg::Node *root, osg::Node *trackNode, double range, bool visible,
-                        boost::shared_ptr<URDFRobot> urdf)
+                        boost::shared_ptr<URDFRobot> urdf,unsigned int mask)
 {
   this->name = name;
   this->root = root;
@@ -37,6 +37,8 @@ void ObjectPicker::init(std::string name, osg::Node *root, osg::Node *trackNode,
   this->trackNode = trackNode;
   //Add a switchable frame geometry on the sensor frame
   osg::ref_ptr < osg::Node > axis = UWSimGeometry::createSwitchableFrame();
+  //Add label to switchable frame
+  axis->asGroup()->addChild(UWSimGeometry::createLabel(name));
   this->trackNode->asGroup()->addChild(axis);
 
   this->range = range;
@@ -47,6 +49,9 @@ void ObjectPicker::init(std::string name, osg::Node *root, osg::Node *trackNode,
   ObjectPickerUpdateCallback::numPickers++;
   trackNode->setUpdateCallback((ObjectPickerUpdateCallback*)(node_tracker.get()));
   trackNode->asGroup()->addChild(node_tracker->geode);
+
+  if(node_tracker->geode)
+    node_tracker->geode->setNodeMask(mask);
 }
 
 /*
