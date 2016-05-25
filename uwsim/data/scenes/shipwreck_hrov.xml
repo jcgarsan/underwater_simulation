@@ -250,7 +250,15 @@
       <rootName> world </rootName>
       <enableObjects> 0 </enableObjects>
       <rate>10</rate>
-    </WorldToROSTF>
+    </WorldToROSTF>    
+    <ArmToROSJointState> 
+	<topic>/uwsim/joint_state</topic>
+	<vehicleName> girona500_RAUVI </vehicleName>
+    </ArmToROSJointState>
+    <ROSJointStateToArm> 
+	<topic>/uwsim/joint_state_command</topic>
+	<vehicleName> girona500_RAUVI </vehicleName>
+    </ROSJointStateToArm>
     <VirtualCameraToROSImage> 
       <cameraName>bowtech1</cameraName>
       <imageTopic> /uwsim/camera1 </imageTopic>
