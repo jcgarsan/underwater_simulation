@@ -26,73 +26,8 @@
 #include "DVLSensor.h"
 #include "MultibeamSensor.h"
 
-#include <nav_msgs/Odometry.h>
-#include <std_msgs/Float64MultiArray.h>
-#include <underwater_sensor_msgs/Pressure.h>
-
-#include <XnCppWrapper.h>
-//#include "math_3d.h"
-
-#define DEG2RAD 0.0174532925
-
-struct TableTransform{float theta,phi,roh;};
-
-class Kinect{
-
-private:
-	const XnDepthPixel * depthData;
-	const XnRGB24Pixel * imageData;
 
 
-
-	XnPoint3D points2D[307200];
-	XnPoint3D points3D[307200];
-
-	float kinectAngle;
-	float pclRot1;
-	float pclRot2;
-
-	TableTransform table;
-
-	xn::Context g_Context;
-	xn::ScriptNode g_scriptNode;
-	xn::DepthGenerator g_DepthGenerator;
-	xn::ImageGenerator g_ImageGenerator;
-	
-public:
-	osg::ref_ptr<osg::Vec3Array> pointsXYZ; 
-	osg::ref_ptr<osg::Vec4Array> pointsRGB;
-	unsigned int * pointsIndices;
-	Kinect(osg::ref_ptr<osg::Vec3Array> vertices, osg::ref_ptr<osg::Vec4Array> colors, unsigned int * pointsI);
-
-	~Kinect();
-
-	int init();
-
-	void update();
-
-	TableTransform tableDetection();
-};
-
-    class KinectCallback : public osg::NodeCallback 
-    {
-		 
-    public:
-       Kinect * kinect;
-       osg::ref_ptr<osg::Geometry> geometry;
-	   KinectCallback(Kinect * kinect, osg::ref_ptr<osg::Geometry> geometry){
-		 this->kinect=kinect;
-		 this->geometry=geometry;
-	   }
-       virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
-       {
-		  kinect->update();
-		  geometry->setVertexArray(kinect->pointsXYZ);
-	      //geometry->setColorArray(kinect->pointsRGB);
-		  //geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POINTS, 0, 307200));
-          traverse(node, nv); 
-       }
-    };
 
 class SceneBuilder;
 
@@ -111,19 +46,6 @@ public:
   std::vector<MultibeamSensor> multibeam_sensors;
   boost::shared_ptr<SimulatedDevices> devices;
   
-  	float pointsPos[921600];
-  osg::ref_ptr<osg::Vec3Array> vertices;
-
-	char pointsColor[921600];
-	    osg::ref_ptr<osg::Vec4Array> colors;
-
-	unsigned int pointsIndices[307200];
-  osg::ref_ptr<osg::Geode> geode;
-      osg::ref_ptr<osg::Geometry> geometry;
-      
-  Kinect * kinect;
-
-
 
   typedef enum
   {
