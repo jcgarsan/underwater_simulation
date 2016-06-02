@@ -1,16 +1,19 @@
 #ifndef WINDSHIELD_H_
 #define WINDSHIELD_H_
 
-
-
 #include <osg/Geode>
 #include <osg/ShapeDrawable>
 #include <osg/TexMat>
 #include <osg/PolygonMode>
 #include <osg/NodeVisitor>
 #include <osg/Node>
+#include <osg/MatrixTransform>
+#include <osg/PositionAttitudeTransform>
+#include <osg/Point>
+
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Float64MultiArray.h>
+#include <std_msgs/Int8MultiArray.h>
 #include <underwater_sensor_msgs/Pressure.h>
 #include <sensor_msgs/Range.h>
 
@@ -30,12 +33,9 @@
 #include <uwsim/SimulatorConfig.h>
 #include <uwsim/SimulatedIAUV.h>
 #include <uwsim/URDFRobot.h>
-#include <osg/MatrixTransform>
-#include <osg/PositionAttitudeTransform>
-
-#include <osg/Point>
 
 #define pressureThreshold   0.5
+#define num_sensors         2       // 0 = is there an alarm?, 1 = surface, 2 = seafloor
 
 
 osg::Geode* drawCube(int cx, int cy, int cz, float size)
@@ -47,6 +47,8 @@ osg::Geode* drawCube(int cx, int cy, int cz, float size)
 
     return basicShapesGeode;
 }
+
+
 
 osg::Geode* createSphere(float radius, osg::Vec4 color)
 {
@@ -66,6 +68,8 @@ osg::Geode* createSphere(float radius, osg::Vec4 color)
     return basicShapesGeode;
 }
 
+
+
 osg::Geode* createBox(osg::Vec3 center, float tx, float ty, float tz, osg::Vec4 color)
 {
     osg::Box* unitCube = new osg::Box(center, -tx, -ty, -tz);
@@ -78,6 +82,7 @@ osg::Geode* createBox(osg::Vec3 center, float tx, float ty, float tz, osg::Vec4 
     basicShapesGeode->addDrawable(unitCubeDrawable);
     return basicShapesGeode;
 }
+
 
 
 class virtualHandleCallback : public osg::NodeCallback
@@ -142,6 +147,7 @@ public:
         // Continue callbacks for chlildren too.
         ((osg::NodeCallback*) this)->traverse(node, nv);
     };
+
 private:
     float _x, _y, _z;
     float _px, _py, _pz;
@@ -176,6 +182,7 @@ osg::Group* createVirtualHandle(){
     
     return group;
 }
+
 
 
 class upDownCallback : public osg::NodeCallback
@@ -236,6 +243,7 @@ public:
 		// Continue callbacks for chlildren too.
 		((osg::NodeCallback*) this)->traverse(node, nv);
 	};
+
 private:
     float _z;
     int _state; //-1 -> down // 0 -> deadzone  // 1 -> up
@@ -243,12 +251,12 @@ private:
 	ros::Subscriber robot_z_sub_;
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 class pressureWarningCallback : public osg::NodeCallback
 {
-
 public:
-void pressureSensorCallback(const underwater_sensor_msgs::Pressure::ConstPtr& pressureValue)
+    void pressureSensorCallback(const underwater_sensor_msgs::Pressure::ConstPtr& pressureValue)
 	{
 	    if (abs(pressureValue->pressure) < pressureThreshold)
 			_state = 1;
@@ -307,6 +315,70 @@ private:
 	ros::NodeHandle nh_;
 	ros::Subscriber snsrPressure_sub_;
 };
+
+
+
+class warningSafetyAlarmCallback : public osg::NodeCallback
+{
+public:
+    void warningCallback(const std_msgs::Int8MultiArray::ConstPtr& msg)
+    {
+        _state = msg->data[0];
+    }
+
+    // Override the constructor
+    warningSafetyAlarmCallback()
+    {
+        trans_state = 0;
+        _transparency = 1;
+        _percentage = 0;
+        _state = 0;
+        snsrPressure_sub_ = nh_.subscribe<std_msgs::Int8MultiArray>("safetyMeasuresAlarm", 1, &warningSafetyAlarmCallback::warningCallback, this);
+    };
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        if(trans_state)
+            _transparency += 0.2;
+        else
+            _transparency -= 0.2;
+
+        if(_transparency >= 1)
+            trans_state = 0;
+        else if(_transparency <=0)
+            trans_state = 1;
+
+        osg::Group* currGroup = node->asGroup();
+        osg::Node* foundNode;
+    
+        osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
+        osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
+
+        float a;
+        if(_state == 0)
+            a = 0;
+        else
+            a = _transparency;
+
+        osg::Vec4Array* colors = new osg::Vec4Array;
+        colors->push_back(osg::Vec4(1,1,1,a));
+
+        geometry->setColorArray(colors);
+        geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+        // Continue callbacks for chlildren too.
+        ((osg::NodeCallback*) this)->traverse(node, nv);
+    };
+
+private:
+    float _z, _percentage, _transparency;
+    bool trans_state;
+    int _state; //-1 -> down // 0 -> deadzone  // 1 -> up
+    ros::NodeHandle nh_;
+    ros::Subscriber snsrPressure_sub_;
+    std_msgs::Int8MultiArray  safetyMeasuresAlarm;
+};
+
+
 
 osg::Geode* createQuadWithTex(float size, float r, float g, float b, float a, const std::string& filename)
 {
@@ -387,20 +459,22 @@ osg::Geode* createQuadWithTex(float size, float r, float g, float b, float a, co
     return polygeode;
 }
 
+
+
 osg::Geode* createTextBox(float radius, const std::string& text)
 {
     osg::Geode* geode  = new osg::Geode;
     float characterSize = radius*0.2f;
 
     osgText::Text* text1 = new osgText::Text;
-    text1->setFont("home/jseabra/Downloads/arial.ttf");
+    text1->setFont("~/.uwsim/data/objects/arial.ttf");
     text1->setCharacterSize(characterSize);
     text1->setPosition(osg::Vec3(0,0,0));
     text1->setAxisAlignment(osgText::Text::XZ_PLANE);
     text1->setColor(osg::Vec4(1,0,0,1));
     text1->setText(text);
     text1->setAlignment(osgText::Text::CENTER_CENTER);
-//    text1->setDrawMode(osgText::Text::TEXT|osgText::Text::ALIGNMENT|osgText::Text::BOUNDINGBOX);
+    text1->setDrawMode(osgText::Text::TEXT|osgText::Text::ALIGNMENT|osgText::Text::BOUNDINGBOX);////
     text1->setDrawMode(osgText::Text::TEXT);
     //text1->setDataVariance(DYNAMIC); 
 	text1->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), osg::StateAttribute::ON);
@@ -408,6 +482,8 @@ osg::Geode* createTextBox(float radius, const std::string& text)
 
     return geode;
 }
+
+
 
 osg::MatrixTransform* setNodePosition(float up, float right, float depth, osg::Node* geode)
 {
@@ -432,6 +508,7 @@ osg::MatrixTransform* setNodePosition(float up, float right, float depth, osg::N
 
     return transform3;
 }
+
 
 
 class RotationColorCallback : public osg::NodeCallback
@@ -468,6 +545,7 @@ public:
         // Continue callbacks for chlildren too.
         ((osg::NodeCallback*) this)->traverse(node, nv);
     };
+
 private:
     bool state;
     float _angle;
@@ -545,8 +623,9 @@ private:
 };
 
 
-osg::Geode* createRectangularBox(float width, float height, float line_width, float r, float g, float b, float a){
-    
+
+osg::Geode* createRectangularBox(float width, float height, float line_width, float r, float g, float b, float a)
+{
     osg::Geode* geode = new osg::Geode;
     
     // create Geometry object to store all the vertices and lines primitive.
@@ -588,8 +667,10 @@ osg::Geode* createRectangularBox(float width, float height, float line_width, fl
     return geode;
 }
 
-osg::Group* createAnalogDial(float up, float right, float size, const std::string& pointer_filename, const std::string& background_filename){
-    
+
+
+osg::Group* createAnalogDial(float up, float right, float size, const std::string& pointer_filename, const std::string& background_filename)
+{
     osg::Group* dial = new osg::Group;
 
     osg::Geode* background_geode = createQuadWithTex(size, 1, 1, 1, 0.5, background_filename);
@@ -612,8 +693,10 @@ osg::Group* createAnalogDial(float up, float right, float size, const std::strin
     return dial;
 }
 
-osg::Group* createBarGauge(float width, float height, float percentage){
-    
+
+
+osg::Group* createBarGauge(float width, float height, float percentage)
+{
     float diff = height/10;
     
     width -= diff;
@@ -704,25 +787,34 @@ void createWindshield (osg::MatrixTransform *baseTransform)
     }*/
 
     osg::MatrixTransform* udArrow =  new osg::MatrixTransform;
-    udArrow->addChild(createQuadWithTex(0.2,1,1,1,1,"/home/jcgarsan/.uwsim/data/objects/up.png"));
+    udArrow->addChild(createQuadWithTex(0.2,1,1,1,1,"~/.uwsim/data/objects/up.png"));
     udArrow->setUpdateCallback(new upDownCallback());
     osg::MatrixTransform* udArrowTransform = setNodePosition(-0.1, -osg::PI/2+0.4,0,udArrow);
     transform_->addChild(udArrowTransform);
 
-    osg::MatrixTransform* pressureWarning =  new osg::MatrixTransform;
+/*    osg::MatrixTransform* pressureWarning =  new osg::MatrixTransform;
     pressureWarning->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(-90.0), 0.0, 1.0, 0.0));
-    pressureWarning->addChild(createQuadWithTex(0.2,1,1,1,1,"/home/jcgarsan/.uwsim/data/objects/warning.png"));
+    pressureWarning->addChild(createQuadWithTex(0.2,1,1,1,1,"~/.uwsim/data/objects/warning.png"));
     pressureWarning->setUpdateCallback(new pressureWarningCallback());
     osg::MatrixTransform* pressureWarningTransform = setNodePosition(-0.2, -osg::PI/2,0,pressureWarning);
     transform_->addChild(pressureWarningTransform);
+*/
+
+    osg::MatrixTransform* safetyWarning =  new osg::MatrixTransform;
+    safetyWarning->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(-90.0), 0.0, 1.0, 0.0));
+    safetyWarning->addChild(createQuadWithTex(0.2,1,1,1,1,"~/.uwsim/data/objects/warning.png"));
+    safetyWarning->setUpdateCallback(new warningSafetyAlarmCallback());
+    osg::MatrixTransform* safetyWarningTransform = setNodePosition(-0.2, -osg::PI/2, 0, safetyWarning);
+    transform_->addChild(safetyWarningTransform);
+
 
     //This section should be modified to include the user control request icon
-/*    osg::MatrixTransform* pressureWarning2 =  new osg::MatrixTransform;
+    osg::MatrixTransform* pressureWarning2 =  new osg::MatrixTransform;
     pressureWarning2->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(-90.0), 0.0, 1.0, 0.0));
-    pressureWarning2->addChild(createQuadWithTex(0.2,1,1,1,1,"/home/jcgarsan/.uwsim/data/objects/warning.png"));
+    pressureWarning2->addChild(createQuadWithTex(0.2,1,1,1,1,"/home/jcgarsan/.uwsim/data/objects/user.png"));
     pressureWarning2->setUpdateCallback(new pressureWarningCallback());
     osg::MatrixTransform* pressureWarningTransform2 = setNodePosition(-0.2, -osg::PI/2+0.2, 0, pressureWarning2);
-    transform_->addChild(pressureWarningTransform2);*/
+    transform_->addChild(pressureWarningTransform2);
 
     baseTransform->addChild(createBox(osg::Vec3(1.1,0,1.3),0.5,1.5,0.07,osg::Vec4(0.2,0.2,0.2,1)));
     baseTransform->addChild(transform_);
