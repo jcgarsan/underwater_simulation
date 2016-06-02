@@ -38,79 +38,33 @@
 #define num_sensors         2       // 0 = is there an alarm?, 1 = surface, 2 = seafloor
 
 
-osg::Geode* drawCube(int cx, int cy, int cz, float size)
-{
-    osg::Box* unitCube = new osg::Box( osg::Vec3(cx,cy,cz), size);
-    osg::ShapeDrawable* unitCubeDrawable = new osg::ShapeDrawable(unitCube);
-    osg::Geode* basicShapesGeode = new osg::Geode();
-    basicShapesGeode->addDrawable(unitCubeDrawable);
-
-    return basicShapesGeode;
-}
-
-
-
-osg::Geode* createSphere(float radius, osg::Vec4 color)
-{
-    osg::Sphere* unitCube = new osg::Sphere(osg::Vec3(0,0,0), radius);
-    osg::ShapeDrawable* unitCubeDrawable = new osg::ShapeDrawable(unitCube);
-
-	unitCubeDrawable->setColor(color);
-
-    osg::Geode* basicShapesGeode = new osg::Geode();
-    basicShapesGeode->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), osg::StateAttribute::ON); //Unset shader
-
-    osg::ref_ptr<osg::BlendFunc> blendFunc = new osg::BlendFunc;
-    blendFunc->setFunction(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    basicShapesGeode->getOrCreateStateSet()->setAttributeAndModes(blendFunc);
-
-    basicShapesGeode->addDrawable(unitCubeDrawable);
-    return basicShapesGeode;
-}
-
-
-
-osg::Geode* createBox(osg::Vec3 center, float tx, float ty, float tz, osg::Vec4 color)
-{
-    osg::Box* unitCube = new osg::Box(center, -tx, -ty, -tz);
-    osg::ShapeDrawable* unitCubeDrawable = new osg::ShapeDrawable(unitCube);
-
-    unitCubeDrawable->setColor(color);
-
-    osg::Geode* basicShapesGeode = new osg::Geode();
-
-    basicShapesGeode->addDrawable(unitCubeDrawable);
-    return basicShapesGeode;
-}
-
-
 
 class virtualHandleCallback : public osg::NodeCallback
 {
 public:
     void virtual_joy_Callback(const std_msgs::Float64MultiArray::ConstPtr& thrusterArray)
-	{
-		_x = thrusterArray->data[0] * 100;
-		_y = thrusterArray->data[4] * 100;
-		_z = 100;
-		//_z = thrusterArray->data[2] * 100;
-		//cout << "_x = " << _x << "; _y = " << _y << "; _z = " << _z << endl;
-		_stop = 0;
-	}
+    {
+        _x = thrusterArray->data[0] * 100;
+        _y = thrusterArray->data[4] * 100;
+        _z = 100;
+        //_z = thrusterArray->data[2] * 100;
+        //cout << "_x = " << _x << "; _y = " << _y << "; _z = " << _z << endl;
+        _stop = 0;
+    }
 
 
     // Override the constructor
     virtualHandleCallback(){
         _x = _y = _z = 0;
-		virtual_joy_sub_ = nh_.subscribe<std_msgs::Float64MultiArray>("g500/thrusters_input", 1,\
-												 &virtualHandleCallback::virtual_joy_Callback, this);
+        virtual_joy_sub_ = nh_.subscribe<std_msgs::Float64MultiArray>("g500/thrusters_input", 1,\
+                                                 &virtualHandleCallback::virtual_joy_Callback, this);
     };
     void operator()(osg::Node* node, osg::NodeVisitor* nv){
         
         osg::Group* currGroup = node->asGroup();
         osg::Node* foundNode;
         
-		float size = 0.5;
+        float size = 0.5;
         
         if (currGroup) {
             for (unsigned int i = 0 ; i < currGroup->getNumChildren(); i ++)
@@ -151,37 +105,10 @@ public:
 private:
     float _x, _y, _z;
     float _px, _py, _pz;
-	bool _stop;
-	ros::NodeHandle nh_;
-	ros::Subscriber virtual_joy_sub_;
+    bool _stop;
+    ros::NodeHandle nh_;
+    ros::Subscriber virtual_joy_sub_;
 };
-
-osg::Group* createVirtualHandle(){
-    
-    osg::Cylinder* cylinder = new osg::Cylinder(osg::Vec3(0,0,0.5),0.05,1);
-    osg::ShapeDrawable* cylinderDrawable = new osg::ShapeDrawable(cylinder);
-    osg::Geode* cylinderGeode = new osg::Geode();
-    cylinderGeode->addDrawable(cylinderDrawable);
-    cylinderGeode->setName("cylinder");
-
-    osg::PositionAttitudeTransform* transform = new osg::PositionAttitudeTransform;
-    transform->addChild(cylinderGeode);
-    transform->setName("handle_transform");
-	
-	osg::Geode* cube = createSphere(0.15, osg::Vec4(0.8,0.8,0.8,1));
-
-	osg::PositionAttitudeTransform* transform2 = new osg::PositionAttitudeTransform;
-	transform2->addChild(cube);
-	transform2->setName("cube_transform");
-	
-    osg::Group* group = new osg::Group;
-    
-    group->addChild(transform);
-	group->addChild(transform2);
-    group->setUpdateCallback(new virtualHandleCallback());
-    
-    return group;
-}
 
 
 
@@ -189,66 +116,66 @@ class upDownCallback : public osg::NodeCallback
 {
 public:
     void robotZCallback(const nav_msgs::Odometry::ConstPtr& odom)
-	{
-		if(abs(_z-odom->pose.pose.position.z) < 0.01)
-			_state = 0;
-		else if(_z < odom->pose.pose.position.z)
-			_state = 1;
-		else if(_z > odom->pose.pose.position.z)
-			_state = -1;	
-		
-		//cout << "state: " << _state << "  z: " << odom->pose.pose.position.z << "  _z: " << _z << endl;
-		_z = odom->pose.pose.position.z;
-	};
+    {
+        if(abs(_z-odom->pose.pose.position.z) < 0.01)
+            _state = 0;
+        else if(_z < odom->pose.pose.position.z)
+            _state = 1;
+        else if(_z > odom->pose.pose.position.z)
+            _state = -1;    
+        
+        //cout << "state: " << _state << "  z: " << odom->pose.pose.position.z << "  _z: " << _z << endl;
+        _z = odom->pose.pose.position.z;
+    };
 
     // Override the constructor
     upDownCallback(){
-	robot_z_sub_ = nh_.subscribe<nav_msgs::Odometry>("uwsim/girona500_odom_RAUVI", 1, &upDownCallback::robotZCallback, this);
+    robot_z_sub_ = nh_.subscribe<nav_msgs::Odometry>("uwsim/girona500_odom_RAUVI", 1, &upDownCallback::robotZCallback, this);
     };
-	void operator()(osg::Node* node, osg::NodeVisitor* nv){
+    void operator()(osg::Node* node, osg::NodeVisitor* nv){
 
-		osg::Group* currGroup = node->asGroup();
-		osg::Node* foundNode;
-	
-		osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
-		osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
+        osg::Group* currGroup = node->asGroup();
+        osg::Node* foundNode;
+    
+        osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
+        osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
 
-		float a,b;
-		if(_state == 0){
-			a = 0;
-		}
-		else{
-			a = 1;
-		}
+        float a,b;
+        if(_state == 0){
+            a = 0;
+        }
+        else{
+            a = 1;
+        }
 
-		float angle;
-		if(_state == -1){
-			angle = 90+180;
-			b = 0.7;
-		}
-		else if (_state == 1){
-			angle = 90;
-			b = 1;
-		}
+        float angle;
+        if(_state == -1){
+            angle = 90+180;
+            b = 0.7;
+        }
+        else if (_state == 1){
+            angle = 90;
+            b = 1;
+        }
 
-		osg::Vec4Array* colors = new osg::Vec4Array;
-		colors->push_back(osg::Vec4(0,0,b,a));
+        osg::Vec4Array* colors = new osg::Vec4Array;
+        colors->push_back(osg::Vec4(0,0,b,a));
 
-		geometry->setColorArray(colors);
-		geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+        geometry->setColorArray(colors);
+        geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
-		osg::MatrixTransform* transform = dynamic_cast<osg::MatrixTransform*>(node);        
-	        transform->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(angle), 0.0, 1.0, 0.0));
+        osg::MatrixTransform* transform = dynamic_cast<osg::MatrixTransform*>(node);        
+            transform->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(angle), 0.0, 1.0, 0.0));
 
-		// Continue callbacks for chlildren too.
-		((osg::NodeCallback*) this)->traverse(node, nv);
-	};
+        // Continue callbacks for chlildren too.
+        ((osg::NodeCallback*) this)->traverse(node, nv);
+    };
 
 private:
     float _z;
     int _state; //-1 -> down // 0 -> deadzone  // 1 -> up
-	ros::NodeHandle nh_;
-	ros::Subscriber robot_z_sub_;
+    ros::NodeHandle nh_;
+    ros::Subscriber robot_z_sub_;
 };
 
 
@@ -257,83 +184,21 @@ class pressureWarningCallback : public osg::NodeCallback
 {
 public:
     void pressureSensorCallback(const underwater_sensor_msgs::Pressure::ConstPtr& pressureValue)
-	{
-	    if (abs(pressureValue->pressure) < pressureThreshold)
-			_state = 1;
-		else
-			_state = 0;
-		
-	}
+    {
+        if (abs(pressureValue->pressure) < pressureThreshold)
+            _state = 1;
+        else
+            _state = 0;
+        
+    }
 
     // Override the constructor
     pressureWarningCallback()
     {
-		trans_state = 0;
-		_transparency = 1;
-		_percentage = 0;
-		_state = 0;
-		snsrPressure_sub_ = nh_.subscribe<underwater_sensor_msgs::Pressure>("g500/pressure", 1, &pressureWarningCallback::pressureSensorCallback, this);
-    };
-	void operator()(osg::Node* node, osg::NodeVisitor* nv)
-	{
-		if(trans_state)
-			_transparency += 0.2;
-		else
-			_transparency -= 0.2;
-
-		if(_transparency >= 1)
-			trans_state = 0;
-		else if(_transparency <=0)
-			trans_state = 1;
-
-		osg::Group* currGroup = node->asGroup();
-		osg::Node* foundNode;
-	
-		osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
-		osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
-
-		float a;
-		if(_state == 0)
-			a = 0;
-		else
-			a = _transparency;
-
-		osg::Vec4Array* colors = new osg::Vec4Array;
-		colors->push_back(osg::Vec4(1,1,1,a));
-
-		geometry->setColorArray(colors);
-		geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
-
-		// Continue callbacks for chlildren too.
-		((osg::NodeCallback*) this)->traverse(node, nv);
-	};
-
-private:
-    float _z, _percentage, _transparency;
-    bool trans_state;
-    int _state; //-1 -> down // 0 -> deadzone  // 1 -> up
-	ros::NodeHandle nh_;
-	ros::Subscriber snsrPressure_sub_;
-};
-
-
-
-class warningSafetyAlarmCallback : public osg::NodeCallback
-{
-public:
-    void warningCallback(const std_msgs::Int8MultiArray::ConstPtr& msg)
-    {
-        _state = msg->data[0];
-    }
-
-    // Override the constructor
-    warningSafetyAlarmCallback()
-    {
         trans_state = 0;
         _transparency = 1;
-        _percentage = 0;
         _state = 0;
-        snsrPressure_sub_ = nh_.subscribe<std_msgs::Int8MultiArray>("safetyMeasuresAlarm", 1, &warningSafetyAlarmCallback::warningCallback, this);
+        snsrPressure_sub_ = nh_.subscribe<underwater_sensor_msgs::Pressure>("g500/pressure", 1, &pressureWarningCallback::pressureSensorCallback, this);
     };
     void operator()(osg::Node* node, osg::NodeVisitor* nv)
     {
@@ -353,14 +218,14 @@ public:
         osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
         osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
 
-        float a;
+        float alphaChannel;
         if(_state == 0)
-            a = 0;
+            alphaChannel = 0;
         else
-            a = _transparency;
+            alphaChannel = _transparency;
 
         osg::Vec4Array* colors = new osg::Vec4Array;
-        colors->push_back(osg::Vec4(1,1,1,a));
+        colors->push_back(osg::Vec4(1, 1, 1, alphaChannel));
 
         geometry->setColorArray(colors);
         geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
@@ -370,13 +235,325 @@ public:
     };
 
 private:
-    float _z, _percentage, _transparency;
-    bool trans_state;
-    int _state; //-1 -> down // 0 -> deadzone  // 1 -> up
+    float           _transparency;
+    bool            trans_state;
+    int             _state; //-1 -> down // 0 -> deadzone  // 1 -> up
     ros::NodeHandle nh_;
     ros::Subscriber snsrPressure_sub_;
-    std_msgs::Int8MultiArray  safetyMeasuresAlarm;
 };
+
+
+
+class warningSafetyAlarmCallback : public osg::NodeCallback
+{
+public:
+    void warningCallback(const std_msgs::Int8MultiArray::ConstPtr& msg)
+    {
+        _state = msg->data[0];
+    }
+
+    // Override the constructor
+    warningSafetyAlarmCallback()
+    {
+        trans_state = 0;
+        _transparency = 1;
+        _state = 0;
+        warning_sub_ = nh_.subscribe<std_msgs::Int8MultiArray>("safetyMeasuresAlarm", 1, &warningSafetyAlarmCallback::warningCallback, this);
+    };
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        if(trans_state)
+            _transparency += 0.2;
+        else
+            _transparency -= 0.2;
+
+        if(_transparency >= 1)
+            trans_state = 0;
+        else if(_transparency <=0)
+            trans_state = 1;
+
+        osg::Group* currGroup = node->asGroup();
+        osg::Node* foundNode;
+    
+        osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
+        osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
+
+        float alphaChannel;
+        if(_state == 0)
+            alphaChannel = 0;
+        else
+            alphaChannel = _transparency;
+
+        osg::Vec4Array* colors = new osg::Vec4Array;
+        colors->push_back(osg::Vec4(1, 1, 1, alphaChannel));
+
+        geometry->setColorArray(colors);
+        geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+        // Continue callbacks for chlildren too.
+        ((osg::NodeCallback*) this)->traverse(node, nv);
+    };
+
+private:
+    float                       _transparency;
+    bool                         trans_state;
+    int                         _state; //-1 -> down // 0 -> deadzone  // 1 -> up
+    ros::NodeHandle             nh_;
+    ros::Subscriber             warning_sub_;
+    std_msgs::Int8MultiArray    safetyMeasuresAlarm;
+};
+
+
+
+class userControlCallback : public osg::NodeCallback
+{
+public:
+    void userCallback(const std_msgs::Int8MultiArray::ConstPtr& msg)
+    {
+        _state = msg->data[0];
+    }
+
+    // Override the constructor
+    userControlCallback()
+    {
+        trans_state = 0;
+        _transparency = 1;
+        _state = 0;
+        userControl_sub_ = nh_.subscribe<std_msgs::Int8MultiArray>("userControlAlarm", 1, &userControlCallback::userCallback, this);
+    };
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        if(trans_state)
+            _transparency += 0.2;
+        else
+            _transparency -= 0.2;
+
+        if(_transparency >= 1)
+            trans_state = 0;
+        else if(_transparency <=0)
+            trans_state = 1;
+
+        osg::Group* currGroup = node->asGroup();
+        osg::Node* foundNode;
+    
+        osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
+        osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
+
+        float alphaChannel;
+        if(_state == 0)
+            alphaChannel = 0;
+        else
+            alphaChannel = _transparency;
+
+        osg::Vec4Array* colors = new osg::Vec4Array;
+        colors->push_back(osg::Vec4(1, 1, 1, alphaChannel));
+
+        geometry->setColorArray(colors);
+        geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+        // Continue callbacks for chlildren too.
+        ((osg::NodeCallback*) this)->traverse(node, nv);
+    };
+
+private:
+    float                       _transparency;
+    bool                        trans_state;
+    int                         _state; //-1 -> down // 0 -> deadzone  // 1 -> up
+    ros::NodeHandle             nh_;
+    ros::Subscriber             userControl_sub_;
+    std_msgs::Int8MultiArray    safetyMeasuresAlarm;
+};
+
+
+
+class RotationColorCallback : public osg::NodeCallback
+{
+public:
+    // Override the constructor
+    RotationColorCallback(){
+        _angle = -145;
+        state = 0;
+    };
+
+
+    void operator()(osg::Node* node, osg::NodeVisitor* nv){
+
+        if (!state) {
+            if (_angle > -145) {
+                _angle -= 1;
+            }
+            else
+                state = 1;
+        }
+        else{
+            if (_angle < 150) {
+                _angle += 1;
+            }
+            else
+                state = 0;
+        }
+
+
+        osg::MatrixTransform* transform = dynamic_cast<osg::MatrixTransform*>(node);
+        
+        transform->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(_angle), 0.0, 1.0, 0.0));
+        // Continue callbacks for chlildren too.
+        ((osg::NodeCallback*) this)->traverse(node, nv);
+    };
+
+private:
+    bool state;
+    float _angle;
+    float _r, _g, _b, _a;
+};
+
+
+
+class sliderGaugeCallback : public osg::NodeCallback
+{
+public:
+    void sensorRngCallback(const sensor_msgs::Range::ConstPtr& rangeValue)
+    {
+        _percentage = 1-(rangeValue->range) / (rangeValue->max_range);
+    }
+
+    // Override the constructor
+    sliderGaugeCallback(float width, float height)
+    {
+        _width = width;
+        _height = height;
+        _percentage = 0;
+        state = 0;
+        snsrRange_sub_ = nh_.subscribe<sensor_msgs::Range>("uwsim/g500/range", 1, &sliderGaugeCallback::sensorRngCallback, this);
+    };
+    
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        osg::Group* currGroup = node->asGroup();
+        osg::Node* foundNode;
+        
+        if (currGroup) 
+        {
+            for (unsigned int i = 0 ; i < currGroup->getNumChildren(); i ++)
+            {
+                if (currGroup->getChild(i)->getName() == "bar_status")
+                {
+                    osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(i));
+                    osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
+                    
+                    float r, g, a;
+                    
+                    r = _percentage;
+                    g = 1.0-_percentage;
+                    a = 1.2-_percentage;
+                    
+                    osg::Vec4Array* colors = new osg::Vec4Array;
+                    colors->push_back(osg::Vec4(r,g,0,a));
+
+                    geometry->setColorArray(colors);
+                    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+                    
+                    osg::Vec3Array* vertices = new osg::Vec3Array(5);
+                    (*vertices)[0].set(-_width/2, 0, -_height/2);
+                    (*vertices)[1].set(-_width/2, 0, _height/2 - (1-_percentage)*_height);
+                    (*vertices)[2].set(_width/2, 0, _height/2 - (1-_percentage)*_height);
+                    (*vertices)[3].set(_width/2, 0, -_height/2);
+                    (*vertices)[4].set(-_width/2, 0, -_height/2);
+                    
+                    // pass the created vertex array to the points geometry object.
+                    geometry->setVertexArray(vertices);
+                }
+            }
+        }
+        
+        // Continue callbacks for chlildren too.
+        ((osg::NodeCallback*) this)->traverse(node, nv);
+    };
+
+private:
+    bool state;
+    float _percentage;
+    float _width, _height;
+
+    ros::NodeHandle nh_;
+    ros::Subscriber snsrRange_sub_;
+};
+
+
+
+osg::Geode* createSphere(float radius, osg::Vec4 color)
+{
+    osg::Sphere* unitCube = new osg::Sphere(osg::Vec3(0,0,0), radius);
+    osg::ShapeDrawable* unitCubeDrawable = new osg::ShapeDrawable(unitCube);
+
+    unitCubeDrawable->setColor(color);
+
+    osg::Geode* basicShapesGeode = new osg::Geode();
+    basicShapesGeode->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), osg::StateAttribute::ON); //Unset shader
+
+    osg::ref_ptr<osg::BlendFunc> blendFunc = new osg::BlendFunc;
+    blendFunc->setFunction(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    basicShapesGeode->getOrCreateStateSet()->setAttributeAndModes(blendFunc);
+
+    basicShapesGeode->addDrawable(unitCubeDrawable);
+    return basicShapesGeode;
+}
+
+
+
+osg::Group* createVirtualHandle()
+{
+    osg::Cylinder* cylinder = new osg::Cylinder(osg::Vec3(0,0,0.5),0.05,1);
+    osg::ShapeDrawable* cylinderDrawable = new osg::ShapeDrawable(cylinder);
+    osg::Geode* cylinderGeode = new osg::Geode();
+    cylinderGeode->addDrawable(cylinderDrawable);
+    cylinderGeode->setName("cylinder");
+
+    osg::PositionAttitudeTransform* transform = new osg::PositionAttitudeTransform;
+    transform->addChild(cylinderGeode);
+    transform->setName("handle_transform");
+    
+    osg::Geode* cube = createSphere(0.15, osg::Vec4(0.8,0.8,0.8,1));
+
+    osg::PositionAttitudeTransform* transform2 = new osg::PositionAttitudeTransform;
+    transform2->addChild(cube);
+    transform2->setName("cube_transform");
+    
+    osg::Group* group = new osg::Group;
+    
+    group->addChild(transform);
+    group->addChild(transform2);
+    group->setUpdateCallback(new virtualHandleCallback());
+    
+    return group;
+}
+
+
+
+osg::Geode* drawCube(int cx, int cy, int cz, float size)
+{
+    osg::Box* unitCube = new osg::Box( osg::Vec3(cx,cy,cz), size);
+    osg::ShapeDrawable* unitCubeDrawable = new osg::ShapeDrawable(unitCube);
+    osg::Geode* basicShapesGeode = new osg::Geode();
+    basicShapesGeode->addDrawable(unitCubeDrawable);
+
+    return basicShapesGeode;
+}
+
+
+
+osg::Geode* createBox(osg::Vec3 center, float tx, float ty, float tz, osg::Vec4 color)
+{
+    osg::Box* unitCube = new osg::Box(center, -tx, -ty, -tz);
+    osg::ShapeDrawable* unitCubeDrawable = new osg::ShapeDrawable(unitCube);
+
+    unitCubeDrawable->setColor(color);
+
+    osg::Geode* basicShapesGeode = new osg::Geode();
+
+    basicShapesGeode->addDrawable(unitCubeDrawable);
+    return basicShapesGeode;
+}
 
 
 
@@ -508,119 +685,6 @@ osg::MatrixTransform* setNodePosition(float up, float right, float depth, osg::N
 
     return transform3;
 }
-
-
-
-class RotationColorCallback : public osg::NodeCallback
-{
-public:
-    // Override the constructor
-    RotationColorCallback(){
-        _angle = -145;
-        state = 0;
-    };
-
-
-    void operator()(osg::Node* node, osg::NodeVisitor* nv){
-
-        if (!state) {
-            if (_angle > -145) {
-                _angle -= 1;
-            }
-            else
-                state = 1;
-        }
-        else{
-            if (_angle < 150) {
-                _angle += 1;
-            }
-            else
-                state = 0;
-        }
-
-
-        osg::MatrixTransform* transform = dynamic_cast<osg::MatrixTransform*>(node);
-        
-        transform->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(_angle), 0.0, 1.0, 0.0));
-        // Continue callbacks for chlildren too.
-        ((osg::NodeCallback*) this)->traverse(node, nv);
-    };
-
-private:
-    bool state;
-    float _angle;
-    float _r, _g, _b, _a;
-};
-
-class sliderGaugeCallback : public osg::NodeCallback
-{
-public:
-	void sensorRngCallback(const sensor_msgs::Range::ConstPtr& rangeValue)
-	{
-        _percentage = 1-(rangeValue->range) / (rangeValue->max_range);
-	}
-
-    // Override the constructor
-    sliderGaugeCallback(float width, float height)
-    {
-        _width = width;
-        _height = height;
-        _percentage = 0;
-        state = 0;
-    	snsrRange_sub_ = nh_.subscribe<sensor_msgs::Range>("uwsim/g500/range", 1, &sliderGaugeCallback::sensorRngCallback, this);
-    };
-    
-    void operator()(osg::Node* node, osg::NodeVisitor* nv)
-    {
-        osg::Group* currGroup = node->asGroup();
-        osg::Node* foundNode;
-        
-        if (currGroup) 
-		{
-            for (unsigned int i = 0 ; i < currGroup->getNumChildren(); i ++)
-            {
-                if (currGroup->getChild(i)->getName() == "bar_status")
-                {
-                    osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(i));
-                    osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
-                    
-                    float r, g, a;
-                    
-                    r = _percentage;
-                    g = 1.0-_percentage;
-                    a = 1.2-_percentage;
-                    
-                    osg::Vec4Array* colors = new osg::Vec4Array;
-                    colors->push_back(osg::Vec4(r,g,0,a));
-
-		    		geometry->setColorArray(colors);
-		    		geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
-                    
-                    osg::Vec3Array* vertices = new osg::Vec3Array(5);
-                    (*vertices)[0].set(-_width/2, 0, -_height/2);
-                    (*vertices)[1].set(-_width/2, 0, _height/2 - (1-_percentage)*_height);
-                    (*vertices)[2].set(_width/2, 0, _height/2 - (1-_percentage)*_height);
-                    (*vertices)[3].set(_width/2, 0, -_height/2);
-                    (*vertices)[4].set(-_width/2, 0, -_height/2);
-                    
-                    // pass the created vertex array to the points geometry object.
-                    geometry->setVertexArray(vertices);
-                }
-            }
-        }
-        
-        // Continue callbacks for chlildren too.
-        ((osg::NodeCallback*) this)->traverse(node, nv);
-    };
-
-private:
-    bool state;
-    float _percentage;
-    float _width, _height;
-
-	ros::NodeHandle nh_;
-	ros::Subscriber snsrRange_sub_;
-};
 
 
 
@@ -809,12 +873,12 @@ void createWindshield (osg::MatrixTransform *baseTransform)
 
 
     //This section should be modified to include the user control request icon
-    osg::MatrixTransform* pressureWarning2 =  new osg::MatrixTransform;
-    pressureWarning2->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(-90.0), 0.0, 1.0, 0.0));
-    pressureWarning2->addChild(createQuadWithTex(0.2,1,1,1,1,"/home/jcgarsan/.uwsim/data/objects/user.png"));
-    pressureWarning2->setUpdateCallback(new pressureWarningCallback());
-    osg::MatrixTransform* pressureWarningTransform2 = setNodePosition(-0.2, -osg::PI/2+0.2, 0, pressureWarning2);
-    transform_->addChild(pressureWarningTransform2);
+    osg::MatrixTransform* userControlWarning =  new osg::MatrixTransform;
+    userControlWarning->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(-90.0), 0.0, 1.0, 0.0));
+    userControlWarning->addChild(createQuadWithTex(0.2,1,1,1,1,"~/.uwsim/data/objects/user.png"));
+    userControlWarning->setUpdateCallback(new userControlCallback());
+    osg::MatrixTransform* userControlWarningTransform = setNodePosition(-0.2, -osg::PI/2+0.2, 0, userControlWarning);
+    transform_->addChild(userControlWarningTransform);
 
     baseTransform->addChild(createBox(osg::Vec3(1.1,0,1.3),0.5,1.5,0.07,osg::Vec4(0.2,0.2,0.2,1)));
     baseTransform->addChild(transform_);
