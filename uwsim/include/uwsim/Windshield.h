@@ -846,9 +846,9 @@ void createWindshield (osg::MatrixTransform *baseTransform)
 
     transform_->addChild(transform_vh);
 
-    /*for (float b=0; b>-1*osg::PI/2; b-=10) {
+    for (float b=0; b>-1*osg::PI/2; b-=10) {
         transform_->addChild(setNodePosition(b, -osg::PI/2+0.5, 0, createTextBox(1 , "windshield")));
-    }*/
+    }
 
     osg::MatrixTransform* udArrow =  new osg::MatrixTransform;
     udArrow->addChild(createQuadWithTex(0.2,1,1,1,1,"~/.uwsim/data/objects/up.png"));
