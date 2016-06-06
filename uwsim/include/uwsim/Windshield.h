@@ -1,3 +1,17 @@
+/* Copyright (c) 2016 University of Jaume-I.
+ * 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/licenses/gpl.html
+ * 
+ * Contributors:
+ *      Joao Sebra
+ *      Juan Carlos García
+ *      Javier Perez
+ */
+
+
 #ifndef WINDSHIELD_H_
 #define WINDSHIELD_H_
 
@@ -14,6 +28,7 @@
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Int8MultiArray.h>
+#include <std_msgs/Int8.h>
 #include <underwater_sensor_msgs/Pressure.h>
 #include <sensor_msgs/Range.h>
 
@@ -49,24 +64,24 @@ public:
         _z = 100;
         //_z = thrusterArray->data[2] * 100;
         //cout << "_x = " << _x << "; _y = " << _y << "; _z = " << _z << endl;
-        _stop = 0;
     }
 
 
     // Override the constructor
-    virtualHandleCallback(){
+    virtualHandleCallback()
+    {
         _x = _y = _z = 0;
         virtual_joy_sub_ = nh_.subscribe<std_msgs::Float64MultiArray>("g500/thrusters_input", 1,\
                                                  &virtualHandleCallback::virtual_joy_Callback, this);
     };
-    void operator()(osg::Node* node, osg::NodeVisitor* nv){
-        
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        float size = 0.5;
         osg::Group* currGroup = node->asGroup();
         osg::Node* foundNode;
         
-        float size = 0.5;
-        
-        if (currGroup) {
+        if (currGroup)
+        {
             for (unsigned int i = 0 ; i < currGroup->getNumChildren(); i ++)
             {
                 if (currGroup->getChild(i)->getName() == "handle_transform")
@@ -105,7 +120,6 @@ public:
 private:
     float _x, _y, _z;
     float _px, _py, _pz;
-    bool _stop;
     ros::NodeHandle nh_;
     ros::Subscriber virtual_joy_sub_;
 };
@@ -129,43 +143,43 @@ public:
     };
 
     // Override the constructor
-    upDownCallback(){
-    robot_z_sub_ = nh_.subscribe<nav_msgs::Odometry>("uwsim/girona500_odom_RAUVI", 1, &upDownCallback::robotZCallback, this);
+    upDownCallback()
+    {
+        robot_z_sub_ = nh_.subscribe<nav_msgs::Odometry>("uwsim/girona500_odom_RAUVI", 1, &upDownCallback::robotZCallback, this);
     };
-    void operator()(osg::Node* node, osg::NodeVisitor* nv){
 
-        osg::Group* currGroup = node->asGroup();
-        osg::Node* foundNode;
-    
-        osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
-        osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
-
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
         float a,b;
-        if(_state == 0){
-            a = 0;
-        }
-        else{
-            a = 1;
-        }
-
         float angle;
-        if(_state == -1){
+        osg::Group* currGroup           = node->asGroup();
+        osg::Geode* geode               = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
+        osg::Geometry* geometry         = geode->getDrawable(0)->asGeometry();
+        osg::Vec4Array* colors          = new osg::Vec4Array;
+        osg::MatrixTransform* transform = dynamic_cast<osg::MatrixTransform*>(node);        
+
+        if(_state == 0)
+            a = 0;
+        else
+            a = 1;
+
+        if(_state == -1)
+        {
             angle = 90+180;
             b = 0.7;
         }
-        else if (_state == 1){
+        else if (_state == 1)
+        {
             angle = 90;
             b = 1;
         }
 
-        osg::Vec4Array* colors = new osg::Vec4Array;
         colors->push_back(osg::Vec4(0,0,b,a));
 
         geometry->setColorArray(colors);
         geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
-        osg::MatrixTransform* transform = dynamic_cast<osg::MatrixTransform*>(node);        
-            transform->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(angle), 0.0, 1.0, 0.0));
+        transform->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(angle), 0.0, 1.0, 0.0));
 
         // Continue callbacks for chlildren too.
         ((osg::NodeCallback*) this)->traverse(node, nv);
@@ -189,19 +203,25 @@ public:
             _state = 1;
         else
             _state = 0;
-        
     }
 
     // Override the constructor
     pressureWarningCallback()
     {
-        trans_state = 0;
+        trans_state   = 0;
         _transparency = 1;
-        _state = 0;
+        _state        = 0;
         snsrPressure_sub_ = nh_.subscribe<underwater_sensor_msgs::Pressure>("g500/pressure", 1, &pressureWarningCallback::pressureSensorCallback, this);
     };
+
     void operator()(osg::Node* node, osg::NodeVisitor* nv)
     {
+        float alphaChannel;
+        osg::Group* currGroup   = node->asGroup();
+        osg::Geode* geode       = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
+        osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
+        osg::Vec4Array* colors  = new osg::Vec4Array;
+
         if(trans_state)
             _transparency += 0.2;
         else
@@ -212,19 +232,11 @@ public:
         else if(_transparency <=0)
             trans_state = 1;
 
-        osg::Group* currGroup = node->asGroup();
-        osg::Node* foundNode;
-    
-        osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
-        osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
-
-        float alphaChannel;
         if(_state == 0)
             alphaChannel = 0;
         else
             alphaChannel = _transparency;
 
-        osg::Vec4Array* colors = new osg::Vec4Array;
         colors->push_back(osg::Vec4(1, 1, 1, alphaChannel));
 
         geometry->setColorArray(colors);
@@ -255,13 +267,20 @@ public:
     // Override the constructor
     warningSafetyAlarmCallback()
     {
-        trans_state = 0;
+        trans_state   = 0;
         _transparency = 1;
-        _state = 0;
+        _state        = 0;
         warning_sub_ = nh_.subscribe<std_msgs::Int8MultiArray>("safetyMeasuresAlarm", 1, &warningSafetyAlarmCallback::warningCallback, this);
     };
+
     void operator()(osg::Node* node, osg::NodeVisitor* nv)
     {
+        float alphaChannel;
+        osg::Group* currGroup   = node->asGroup();
+        osg::Geode* geode       = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
+        osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
+        osg::Vec4Array* colors  = new osg::Vec4Array;
+
         if(trans_state)
             _transparency += 0.2;
         else
@@ -272,19 +291,11 @@ public:
         else if(_transparency <=0)
             trans_state = 1;
 
-        osg::Group* currGroup = node->asGroup();
-        osg::Node* foundNode;
-    
-        osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
-        osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
-
-        float alphaChannel;
         if(_state == 0)
             alphaChannel = 0;
         else
             alphaChannel = _transparency;
 
-        osg::Vec4Array* colors = new osg::Vec4Array;
         colors->push_back(osg::Vec4(1, 1, 1, alphaChannel));
 
         geometry->setColorArray(colors);
@@ -295,12 +306,11 @@ public:
     };
 
 private:
-    float                       _transparency;
-    bool                         trans_state;
-    int                         _state; //-1 -> down // 0 -> deadzone  // 1 -> up
-    ros::NodeHandle             nh_;
-    ros::Subscriber             warning_sub_;
-    std_msgs::Int8MultiArray    safetyMeasuresAlarm;
+    float               _transparency;
+    bool                trans_state;
+    int                 _state; //-1 -> down // 0 -> deadzone  // 1 -> up
+    ros::NodeHandle     nh_;
+    ros::Subscriber     warning_sub_;
 };
 
 
@@ -316,13 +326,20 @@ public:
     // Override the constructor
     userControlCallback()
     {
-        trans_state = 0;
+        trans_state   = 0;
         _transparency = 1;
-        _state = 0;
+        _state        = 0;
         userControl_sub_ = nh_.subscribe<std_msgs::Int8MultiArray>("userControlAlarm", 1, &userControlCallback::userCallback, this);
     };
+
     void operator()(osg::Node* node, osg::NodeVisitor* nv)
     {
+        float alphaChannel;
+        osg::Group* currGroup   = node->asGroup();
+        osg::Geode* geode       = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
+        osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
+        osg::Vec4Array* colors  = new osg::Vec4Array;
+
         if(trans_state)
             _transparency += 0.2;
         else
@@ -333,19 +350,11 @@ public:
         else if(_transparency <=0)
             trans_state = 1;
 
-        osg::Group* currGroup = node->asGroup();
-        osg::Node* foundNode;
-    
-        osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
-        osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
-
-        float alphaChannel;
         if(_state == 0)
             alphaChannel = 0;
         else
             alphaChannel = _transparency;
 
-        osg::Vec4Array* colors = new osg::Vec4Array;
         colors->push_back(osg::Vec4(1, 1, 1, alphaChannel));
 
         geometry->setColorArray(colors);
@@ -356,12 +365,64 @@ public:
     };
 
 private:
-    float                       _transparency;
-    bool                        trans_state;
-    int                         _state; //-1 -> down // 0 -> deadzone  // 1 -> up
-    ros::NodeHandle             nh_;
-    ros::Subscriber             userControl_sub_;
-    std_msgs::Int8MultiArray    safetyMeasuresAlarm;
+    float               _transparency;
+    bool                trans_state;
+    int                 _state; //-1 -> down // 0 -> deadzone  // 1 -> up
+    ros::NodeHandle     nh_;
+    ros::Subscriber     userControl_sub_;
+};
+
+
+
+class missionControlCallback : public osg::NodeCallback
+{
+public:
+    void missionCallback(const std_msgs::Int8::ConstPtr& msg)
+    {
+        _state = msg->data;
+    }
+
+    // Override the constructor
+    missionControlCallback()
+    {
+        _state = -1;
+        missionControl_sub_ = nh_.subscribe<std_msgs::Int8>("missionControlAlarm", 1, &missionControlCallback::missionCallback, this);
+    };
+
+
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        float alphaChannel;
+        osg::Group* currGroup   = node->asGroup();
+        osg::Geode* geode       = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
+        osgText::Text* text     = (osgText::Text *) geode->getDrawable(0);;
+
+        if (_state == 1)
+        {
+            alphaChannel = 1;
+            text->setText("Mission succeed");
+        }
+        else if (_state == 0)
+        {
+            alphaChannel = 1;
+            text->setText("Mission failed");
+        }
+        else
+        {
+            alphaChannel = 0;
+            text->setText("");
+        }            
+
+        text->setColor(osg::Vec4(1, 1, 1, alphaChannel));
+
+        // Continue callbacks for chlildren too.
+        ((osg::NodeCallback*) this)->traverse(node, nv);
+    };
+
+private:
+    int                 _state; //-1 -> mission in progress // 0 -> fail  // 1 -> success
+    ros::NodeHandle     nh_;
+    ros::Subscriber     missionControl_sub_;
 };
 
 
@@ -370,31 +431,31 @@ class RotationColorCallback : public osg::NodeCallback
 {
 public:
     // Override the constructor
-    RotationColorCallback(){
+    RotationColorCallback()
+    {
         _angle = -145;
         state = 0;
     };
 
 
-    void operator()(osg::Node* node, osg::NodeVisitor* nv){
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        osg::MatrixTransform* transform = dynamic_cast<osg::MatrixTransform*>(node);
 
-        if (!state) {
-            if (_angle > -145) {
+        if (!state)
+        {
+            if (_angle > -145)
                 _angle -= 1;
-            }
             else
                 state = 1;
         }
-        else{
-            if (_angle < 150) {
+        else
+        {
+            if (_angle < 150)
                 _angle += 1;
-            }
             else
                 state = 0;
         }
-
-
-        osg::MatrixTransform* transform = dynamic_cast<osg::MatrixTransform*>(node);
         
         transform->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(_angle), 0.0, 1.0, 0.0));
         // Continue callbacks for chlildren too.
@@ -404,7 +465,6 @@ public:
 private:
     bool state;
     float _angle;
-    float _r, _g, _b, _a;
 };
 
 
@@ -420,17 +480,18 @@ public:
     // Override the constructor
     sliderGaugeCallback(float width, float height)
     {
-        _width = width;
-        _height = height;
-        _percentage = 0;
-        state = 0;
-        snsrRange_sub_ = nh_.subscribe<sensor_msgs::Range>("uwsim/g500/range", 1, &sliderGaugeCallback::sensorRngCallback, this);
+        _width          = width;
+        _height         = height;
+        _percentage     = 0;
+        state           = 0;
+        snsrRange_sub_  = nh_.subscribe<sensor_msgs::Range>("uwsim/g500/range", 1, &sliderGaugeCallback::sensorRngCallback, this);
     };
     
     void operator()(osg::Node* node, osg::NodeVisitor* nv)
     {
         osg::Group* currGroup = node->asGroup();
         osg::Node* foundNode;
+        float r, g, a;
         
         if (currGroup) 
         {
@@ -440,12 +501,10 @@ public:
                 {
                     osg::Geode* geode = dynamic_cast<osg::Geode*>(currGroup->getChild(i));
                     osg::Geometry* geometry = geode->getDrawable(0)->asGeometry();
-                    
-                    float r, g, a;
-                    
+
                     r = _percentage;
-                    g = 1.0-_percentage;
-                    a = 1.2-_percentage;
+                    g = 1.0 - _percentage;
+                    a = 1.2 - _percentage;
                     
                     osg::Vec4Array* colors = new osg::Vec4Array;
                     colors->push_back(osg::Vec4(r,g,0,a));
@@ -471,10 +530,9 @@ public:
     };
 
 private:
-    bool state;
-    float _percentage;
-    float _width, _height;
-
+    bool            state;
+    float           _percentage;
+    float           _width, _height;
     ros::NodeHandle nh_;
     ros::Subscriber snsrRange_sub_;
 };
@@ -483,15 +541,15 @@ private:
 
 osg::Geode* createSphere(float radius, osg::Vec4 color)
 {
-    osg::Sphere* unitCube = new osg::Sphere(osg::Vec3(0,0,0), radius);
-    osg::ShapeDrawable* unitCubeDrawable = new osg::ShapeDrawable(unitCube);
+    osg::Sphere* unitCube                   = new osg::Sphere(osg::Vec3(0,0,0), radius);
+    osg::ShapeDrawable* unitCubeDrawable    = new osg::ShapeDrawable(unitCube);
+    osg::Geode* basicShapesGeode            = new osg::Geode();
+    osg::ref_ptr<osg::BlendFunc> blendFunc  = new osg::BlendFunc;
 
     unitCubeDrawable->setColor(color);
 
-    osg::Geode* basicShapesGeode = new osg::Geode();
     basicShapesGeode->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), osg::StateAttribute::ON); //Unset shader
 
-    osg::ref_ptr<osg::BlendFunc> blendFunc = new osg::BlendFunc;
     blendFunc->setFunction(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     basicShapesGeode->getOrCreateStateSet()->setAttributeAndModes(blendFunc);
 
@@ -651,13 +709,54 @@ osg::Geode* createTextBox(float radius, const std::string& text)
     text1->setColor(osg::Vec4(1,0,0,1));
     text1->setText(text);
     text1->setAlignment(osgText::Text::CENTER_CENTER);
-    text1->setDrawMode(osgText::Text::TEXT|osgText::Text::ALIGNMENT|osgText::Text::BOUNDINGBOX);////
+    text1->setDrawMode(osgText::Text::TEXT|osgText::Text::ALIGNMENT|osgText::Text::BOUNDINGBOX);
     text1->setDrawMode(osgText::Text::TEXT);
     //text1->setDataVariance(DYNAMIC); 
 	text1->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), osg::StateAttribute::ON);
     geode->addDrawable(text1);
 
     return geode;
+}
+
+
+
+osg::Group* create3DText(const osg::Vec3& center, const std::string& originalText)
+{
+
+    osg::Group* rootNode = new osg::Group;
+    osg::Geode* geode    = new osg::Geode;
+    osgText::Text* text  = new osgText::Text;
+    //float characterSize = 0.2f;
+
+    text->setFont("~/.uwsim/data/objects/arial.ttf");
+    text->setCharacterSize(0.2f);
+    text->setPosition(center);
+    text->setAxisAlignment(osgText::Text::SCREEN);
+    text->setText(originalText);
+    geode->addDrawable(text);
+    rootNode->addChild(geode);
+
+    return rootNode;    
+}
+
+
+osg::Group* create3DText2()
+{
+
+    osg::Group* rootNode = new osg::Group;
+    osg::Geode* geode    = new osg::Geode;
+    osgText::Text* text  = new osgText::Text;
+    float characterSize = 0.2f;
+
+    text->setFont("~/.uwsim/data/objects/arial.ttf");
+    text->setCharacterSize(characterSize);
+    text->setPosition(osg::Vec3(0.7, -0.5, 0));
+    text->setAxisAlignment(osgText::Text::SCREEN);
+    text->setText("Mission succeed");
+    geode->addDrawable(text);
+    rootNode->addChild(geode);
+
+    return rootNode;
 }
 
 
@@ -830,10 +929,9 @@ osg::Group* createBarGauge(float width, float height, float percentage)
 void createWindshield (osg::MatrixTransform *baseTransform)
 {
     osg::PositionAttitudeTransform* transform_ = new osg::PositionAttitudeTransform;
-    transform_->setPosition(osg::Vec3(0.4, 0, 0.7));
-    
     osg::Group* interface = new osg::Group;
 
+    transform_->setPosition(osg::Vec3(0.4, 0, 0.7));
     transform_->addChild(interface);
 
     osg::Group* bar = createBarGauge(0.05, 0.4, 0.2);
@@ -843,12 +941,17 @@ void createWindshield (osg::MatrixTransform *baseTransform)
     osg::PositionAttitudeTransform* transform_vh = new osg::PositionAttitudeTransform;
     transform_vh->setPosition(osg::Vec3(0.7, 0.5, 0.6));    
     transform_vh->addChild(createVirtualHandle());
-
     transform_->addChild(transform_vh);
 
-    for (float b=0; b>-1*osg::PI/2; b-=10) {
+/*    for (float b=0; b>-1*osg::PI/2; b-=10)
+    {
         transform_->addChild(setNodePosition(b, -osg::PI/2+0.5, 0, createTextBox(1 , "windshield")));
     }
+*/
+
+    osg::Group* missionStatusText = create3DText(osg::Vec3(0.7, -0.5, 0), "");
+    missionStatusText->setUpdateCallback(new missionControlCallback());
+    transform_->addChild(setNodePosition(0.7, -0.5, 0, missionStatusText));
 
     osg::MatrixTransform* udArrow =  new osg::MatrixTransform;
     udArrow->addChild(createQuadWithTex(0.2,1,1,1,1,"~/.uwsim/data/objects/up.png"));
