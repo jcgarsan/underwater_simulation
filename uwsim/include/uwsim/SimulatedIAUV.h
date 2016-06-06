@@ -8,6 +8,7 @@
  * Contributors:
  *     Mario Prats
  *     Javier Perez
+ *     Juan Carlos García
  */
 
 #ifndef SIMULATEDIAUV_H_
