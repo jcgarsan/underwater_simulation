@@ -15,6 +15,9 @@
 #ifndef WINDSHIELD_H_
 #define WINDSHIELD_H_
 
+#include <iostream>
+#include <string>
+
 #include <osg/Geode>
 #include <osg/ShapeDrawable>
 #include <osg/TexMat>
@@ -740,6 +743,7 @@ osg::Group* create3DText(const osg::Vec3& center, const std::string& originalTex
 }
 
 
+
 osg::Group* create3DText2()
 {
 
@@ -926,6 +930,224 @@ osg::Group* createBarGauge(float width, float height, float percentage)
 
 
 
+osg::Geode* createHUDButton(int buttonID, const osg::Vec3& center, const std::string& textButton)
+{
+    // A geometry node for our HUD:
+    osg::Geode* HUDGeode2 = new osg::Geode();
+    // Setup the button ID
+    std::string Id = "button" + buttonID;
+    HUDGeode2->setName(Id);
+    // Text instance that wil show up in the HUDButton:
+    osgText::Text* textOne = new osgText::Text();
+
+    // Set up geometry for the HUD and add it to the HUD
+    osg::Geometry* HUDBackgroundGeometry2 = new osg::Geometry();
+
+    // Set up the button size & position
+    osg::Vec3Array* HUDBackgroundVertices2 = new osg::Vec3Array;
+    if (buttonID == 0)
+    {   
+        HUDBackgroundVertices2->push_back(osg::Vec3(678,   0, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(791,   0, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(791, 100, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(678, 100, -1));
+    }
+    else
+    {
+        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonID-1),       0, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonID-1)+100,   0, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonID-1)+100, 100, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonID-1),     100, -1));
+    }
+
+    osg::DrawElementsUInt* HUDBackgroundIndices2 = new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0);
+    HUDBackgroundIndices2->push_back(0);
+    HUDBackgroundIndices2->push_back(1);
+    HUDBackgroundIndices2->push_back(2);
+    HUDBackgroundIndices2->push_back(3);
+
+    osg::Vec4Array* HUDcolors2 = new osg::Vec4Array;
+    HUDcolors2->push_back(osg::Vec4(0.8f,0.8f,0.8f,0.8f));
+
+    osg::Vec2Array* texcoords2 = new osg::Vec2Array(4);
+    (*texcoords2)[0].set(0.0f,0.0f);
+    (*texcoords2)[1].set(1.0f,0.0f);
+    (*texcoords2)[2].set(1.0f,1.0f);
+    (*texcoords2)[3].set(0.0f,1.0f);
+
+    HUDBackgroundGeometry2->setTexCoordArray(0,texcoords2);
+    osg::Texture2D* HUDTexture2 = new osg::Texture2D;
+    HUDTexture2->setDataVariance(osg::Object::DYNAMIC);
+    osg::Image* hudImage2;
+    hudImage2 = osgDB::readImageFile("~/.uwsim/data/textures/HUD_button_background.jpg");
+    HUDTexture2->setImage(hudImage2);
+    osg::Vec3Array* HUDnormals2 = new osg::Vec3Array;
+    HUDnormals2->push_back(osg::Vec3(0.0f,0.0f,1.0f));
+    HUDBackgroundGeometry2->setNormalArray(HUDnormals2);
+    HUDBackgroundGeometry2->setNormalBinding(osg::Geometry::BIND_OVERALL);
+    HUDBackgroundGeometry2->addPrimitiveSet(HUDBackgroundIndices2);
+    HUDBackgroundGeometry2->setVertexArray(HUDBackgroundVertices2);
+    HUDBackgroundGeometry2->setColorArray(HUDcolors2);
+    HUDBackgroundGeometry2->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+    HUDGeode2->addDrawable(HUDBackgroundGeometry2);
+
+     // Create and set up a state set using the texture from above:
+    osg::StateSet* HUDStateSet2 = new osg::StateSet();
+    HUDGeode2->setStateSet(HUDStateSet2);
+    HUDStateSet2->setTextureAttributeAndModes(0,HUDTexture2,osg::StateAttribute::ON);
+
+    // For this state set, turn blending on (so alpha texture looks right)
+    HUDStateSet2->setMode(GL_BLEND,osg::StateAttribute::ON);
+
+    // Disable depth testing so geometry is draw regardless of depth values
+    // of geometry already draw.
+    HUDStateSet2->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+    HUDStateSet2->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+
+    // Need to make sure this geometry is draw last. RenderBins are handled
+    // in numerical order so set bin number to 11
+    HUDStateSet2->setRenderBinDetails(11, "RenderBin");
+
+
+    // Add the text (Text class is derived from drawable) to the geode:
+    HUDGeode2->addDrawable(textOne);
+
+    // Set up the parameters for the text we'll add to the HUD:
+    textOne->setCharacterSize(20);
+    textOne->setFont("~/.uwsim/data/objects/arial.ttf");
+    textOne->setText(textButton);
+    textOne->setAxisAlignment(osgText::Text::SCREEN);
+//    textOne->setPosition(osg::Vec3(30, 40, 0));
+    textOne->setPosition(center);
+    textOne->setColor(osg::Vec4(0, 0, 0, 1));
+
+
+    return HUDGeode2;
+}
+
+osg::Group* createHUD()
+{
+    // Initialize root of scene:
+    osg::Group* root = new osg::Group();;
+    // A geometry node for our HUD:
+    osg::Geode* HUDGeode = new osg::Geode();
+    // Text instance that wil show up in the HUD:
+    osgText::Text* menuTitle = new osgText::Text();
+    // Projection node for defining view frustrum for HUD:
+    osg::Projection* HUDProjectionMatrix = new osg::Projection;
+
+    // Initialize the projection matrix for viewing everything we
+    // will add as descendants of this node. Use screen coordinates
+    // to define the horizontal and vertical extent of the projection
+    // matrix. Positions described under this node will equate to
+    // pixel coordinates.
+    HUDProjectionMatrix->setMatrix(osg::Matrix::ortho2D(0,1280,0,800));
+
+    // For the HUD model view matrix use an identity matrix:
+    osg::MatrixTransform* HUDModelViewMatrix = new osg::MatrixTransform;
+    HUDModelViewMatrix->setMatrix(osg::Matrix::identity());
+
+    // Make sure the model view matrix is not affected by any transforms
+    // above it in the scene graph:
+    HUDModelViewMatrix->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+
+    // Add the HUD projection matrix as a child of the root node
+    // and the HUD model view matrix as a child of the projection matrix
+    // Anything under this node will be viewed using this projection matrix
+    // and positioned with this model view matrix.
+    root->addChild(HUDProjectionMatrix);
+    HUDProjectionMatrix->addChild(HUDModelViewMatrix);
+
+    // Add the Geometry node to contain HUD geometry as a child of the
+    // HUD model view matrix.
+    HUDModelViewMatrix->addChild(HUDGeode);
+
+    // Set up geometry for the HUD and add it to the HUD
+    osg::Geometry* HUDBackgroundGeometry = new osg::Geometry();
+
+    // ToDo:
+    // We need to increase the Y-value above 100 pixels
+    osg::Vec3Array* HUDBackgroundVertices = new osg::Vec3Array;
+    HUDBackgroundVertices->push_back(osg::Vec3( 0,     0, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(1280,   0, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(1280, 150, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(   0, 150, -1));
+
+    osg::DrawElementsUInt* HUDBackgroundIndices = new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0);
+    HUDBackgroundIndices->push_back(0);
+    HUDBackgroundIndices->push_back(1);
+    HUDBackgroundIndices->push_back(2);
+    HUDBackgroundIndices->push_back(3);
+
+    osg::Vec4Array* HUDcolors = new osg::Vec4Array;
+    HUDcolors->push_back(osg::Vec4(0.8f, 0.8f, 0.8f, 0.8f));
+
+    osg::Vec2Array* texcoords = new osg::Vec2Array(4);
+    (*texcoords)[0].set(0.0f, 0.0f);
+    (*texcoords)[1].set(1.0f, 0.0f);
+    (*texcoords)[2].set(1.0f, 1.0f);
+    (*texcoords)[3].set(0.0f, 1.0f);
+
+    HUDBackgroundGeometry->setTexCoordArray(0,texcoords);
+    osg::Texture2D* HUDTexture = new osg::Texture2D;
+    HUDTexture->setDataVariance(osg::Object::DYNAMIC);
+    osg::Image* hudImage;
+    hudImage = osgDB::readImageFile("~/.uwsim/data/textures/HUD_background.jpg");
+    HUDTexture->setImage(hudImage);
+    osg::Vec3Array* HUDnormals = new osg::Vec3Array;
+    HUDnormals->push_back(osg::Vec3(0.0f, 0.0f, 1.0f));
+    HUDBackgroundGeometry->setNormalArray(HUDnormals);
+    HUDBackgroundGeometry->setNormalBinding(osg::Geometry::BIND_OVERALL);
+    HUDBackgroundGeometry->addPrimitiveSet(HUDBackgroundIndices);
+    HUDBackgroundGeometry->setVertexArray(HUDBackgroundVertices);
+    HUDBackgroundGeometry->setColorArray(HUDcolors);
+    HUDBackgroundGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+    HUDGeode->addDrawable(HUDBackgroundGeometry);
+
+    // Create and set up a state set using the texture from above:
+    osg::StateSet* HUDStateSet = new osg::StateSet();
+    HUDGeode->setStateSet(HUDStateSet);
+    HUDStateSet->setTextureAttributeAndModes(0, HUDTexture, osg::StateAttribute::ON);
+
+    // For this state set, turn blending on (so alpha texture looks right)
+    HUDStateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
+
+    // Disable depth testing so geometry is draw regardless of depth values
+    // of geometry already draw.
+    HUDStateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
+    HUDStateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+
+    // Need to make sure this geometry is draw last. RenderBins are handled
+    // in numerical order so set bin number to 11
+    HUDStateSet->setRenderBinDetails(11, "RenderBin");
+
+    // Add the text (Text class is derived from drawable) to the geode:
+    HUDGeode->addDrawable(menuTitle);
+
+    // Set up the parameters for the text we'll add to the HUD:
+    menuTitle->setCharacterSize(25);
+    menuTitle->setFont("~/.uwsim/data/objects/arial.ttf");
+    menuTitle->setText("New user HUDMenu");
+    menuTitle->setAxisAlignment(osgText::Text::SCREEN);
+    menuTitle->setPosition(osg::Vec3(30, 110, 0));
+    menuTitle->setColor(osg::Vec4(0, 0, 0, 1));
+
+    HUDModelViewMatrix->addChild(createHUDButton(1, osg::Vec3( 15, 40, 0), "Survey"));
+    HUDModelViewMatrix->addChild(createHUDButton(2, osg::Vec3(113, 50, 0), "Object\nRecovery"));
+    HUDModelViewMatrix->addChild(createHUDButton(3, osg::Vec3(226, 50, 0), "Panel\nIntervention"));
+    HUDModelViewMatrix->addChild(createHUDButton(4, osg::Vec3(339, 50, 0), "Dredging\nIntervention"));
+    HUDModelViewMatrix->addChild(createHUDButton(5, osg::Vec3(452, 50, 0), "Go to\nsurface"));
+    HUDModelViewMatrix->addChild(createHUDButton(6, osg::Vec3(565, 50, 0), "Test the\nsystem"));
+    HUDModelViewMatrix->addChild(createHUDButton(0, osg::Vec3(678, 40, 0), "Exit"));
+
+    return root;
+}
+
+
+
+
 void createWindshield (osg::MatrixTransform *baseTransform)
 {
     osg::PositionAttitudeTransform* transform_ = new osg::PositionAttitudeTransform;
@@ -975,7 +1197,6 @@ void createWindshield (osg::MatrixTransform *baseTransform)
     transform_->addChild(safetyWarningTransform);
 
 
-    //This section should be modified to include the user control request icon
     osg::MatrixTransform* userControlWarning =  new osg::MatrixTransform;
     userControlWarning->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(-90.0), 0.0, 1.0, 0.0));
     userControlWarning->addChild(createQuadWithTex(0.2,1,1,1,1,"~/.uwsim/data/objects/user.png"));
@@ -985,6 +1206,9 @@ void createWindshield (osg::MatrixTransform *baseTransform)
 
     baseTransform->addChild(createBox(osg::Vec3(1.1,0,1.3),0.5,1.5,0.07,osg::Vec4(0.2,0.2,0.2,1)));
     baseTransform->addChild(transform_);
+
+    osg::Group* menuHUD = createHUD();
+    transform_->addChild(menuHUD);
 }
 
 #endif
