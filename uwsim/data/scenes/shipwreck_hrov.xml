@@ -288,6 +288,9 @@
       <topic>g500/ForceSensor</topic>
       <rate>100</rate>
     </ForceSensorROS>
+    <ROSPointCloudLoader delLastPCD="true">
+      <topic>/cloud_pcd</topic>
+    </ROSPointCloudLoader>
   </rosInterfaces>
 
 </UWSimScene>

@@ -334,10 +334,14 @@
   </object>
 
   <rosInterfaces>
-    <ROSOdomToPAT>
+    <!-- <ROSOdomToPAT>
       <topic> /dataNavigator </topic>
       <vehicleName> girona500 </vehicleName>
-    </ROSOdomToPAT>
+    </ROSOdomToPAT> -->
+    <PATToROSOdom>
+      <topic> /uwsim/girona500_odom_RAUVI </topic>
+      <vehicleName> girona500_RAUVI </vehicleName>
+    </PATToROSOdom>
     <WorldToROSTF>
       <rootName> world </rootName>
       <enableObjects> 1 </enableObjects>
@@ -420,6 +424,9 @@
       <topic>g500/ForceSensor</topic>
       <rate>100</rate>
     </ForceSensorROS>
+    <ROSPointCloudLoader delLastPCD="true">
+      <topic>/cloud_pcd</topic>
+    </ROSPointCloudLoader>
   </rosInterfaces>
 </UWSimScene>
 

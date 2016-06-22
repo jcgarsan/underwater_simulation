@@ -1209,6 +1209,10 @@ void createWindshield (osg::MatrixTransform *baseTransform)
 
     osg::Group* menuHUD = createHUD();
     transform_->addChild(menuHUD);
+    transform_->setNodeMask(0x40);
+    transform_->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), osg::StateAttribute::ON); //Unset shader
+    transform_->getStateSet()->addUniform(new osg::Uniform("uOverlayMap", 1));
+    transform_->getStateSet()->addUniform(new osg::Uniform("uNormalMap", 2));
 }
 
 #endif
