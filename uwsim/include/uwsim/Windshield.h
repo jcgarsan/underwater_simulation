@@ -1142,7 +1142,12 @@ osg::Group* createHUD()
     HUDModelViewMatrix->addChild(createHUDButton(6, osg::Vec3(565, 50, 0), "Test the\nsystem"));
     HUDModelViewMatrix->addChild(createHUDButton(0, osg::Vec3(678, 40, 0), "Exit"));
 
-    return root;
+    osg::Switch *switchN = new osg::Switch();
+    switchN->setNewChildDefaultValue(true);
+
+    switchN->addChild(root);
+
+    return switchN;
 }
 
 
