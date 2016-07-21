@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <osg/Geode>
 #include <osg/ShapeDrawable>
@@ -541,6 +542,114 @@ private:
 };
 
 
+class showMenuCallback : public osg::NodeCallback
+{
+public:
+    void showMenuGetIDCallback(const std_msgs::Int8MultiArray::ConstPtr& msg)
+    {
+        switchRootBool = msg->data[0];
+        menuID = msg->data[2];
+    }
+
+    // Override the constructor
+    showMenuCallback(std::vector<osg::Switch *> *switchVector)
+    {
+        switchRootBool     = 0;
+        switchVec          = switchVector;
+        userMenuData_sub_  = nh_.subscribe<std_msgs::Int8MultiArray>("userMenuData", 1, &showMenuCallback::showMenuGetIDCallback, this);
+    };
+    
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        osg::Switch* switchRoot = dynamic_cast<osg::Switch*>(node);
+
+        for (int i=0; i<switchVec[0].size();i++)
+        {
+            if (i == menuID)
+                switchVec[0][i]->setAllChildrenOn();
+            else
+                switchVec[0][i]->setAllChildrenOff();    
+        }
+        if (switchRootBool)
+            switchRoot->setAllChildrenOn();
+        else
+            switchRoot->setAllChildrenOff();
+
+        // Continue callbacks for chlildren too.
+        ((osg::NodeCallback*) this)->traverse(node, nv);
+    };
+
+private:
+    int                         switchRootBool;
+    int                         menuID;
+    ros::NodeHandle             nh_;
+    ros::Subscriber             userMenuData_sub_;
+    std::vector<osg::Switch* >   *switchVec;
+};
+
+
+
+class buttonFocusCallback : public osg::NodeCallback
+{
+public:
+    void buttonFocusGetIDCallback(const std_msgs::Int8MultiArray::ConstPtr& msg)
+    {
+        buttonID = msg->data[3];
+    }
+
+    // Override the constructor
+    buttonFocusCallback()
+    {
+        buttonID            = 0;
+        userMenuData_sub_   = nh_.subscribe<std_msgs::Int8MultiArray>("userMenuData", 1, &buttonFocusCallback::buttonFocusGetIDCallback, this);
+    };
+    
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        osg::Switch* switchRoot = dynamic_cast<osg::Switch*>(node);
+        osg::Group* currentGroup = node->asGroup();
+        osg::Node* foundNode;
+        ostringstream buttonFocus;
+
+        buttonFocus << buttonID;
+        
+        if (currentGroup) 
+        {
+            cout << "getName: " << currentGroup->getChild(0)->getName() << endl;
+
+//            if (currentGroup->getChild(0)->getChild(0).getName() == buttonFocus.str())
+//            {
+//                cout << "done: " << buttonID << endl;
+//            }
+        }
+
+
+
+
+/*        for (int i=0; i<switchVec[0].size();i++)
+        {
+            if (i == menuID)
+                switchVec[0][i]->setAllChildrenOn();
+            else
+                switchVec[0][i]->setAllChildrenOff();    
+        }
+        if (switchRootBool)
+            switchRoot->setAllChildrenOn();
+        else
+            switchRoot->setAllChildrenOff();
+*/
+        // Continue callbacks for chlildren too.
+        ((osg::NodeCallback*) this)->traverse(node, nv);
+    };
+
+private:
+    int                         buttonID;
+    ros::NodeHandle             nh_;
+    ros::Subscriber             userMenuData_sub_;
+    std::vector<osg::Switch* >   *switchVec;
+};
+
+
 
 osg::Geode* createSphere(float radius, osg::Vec4 color)
 {
@@ -1018,18 +1127,19 @@ osg::Geode* createHUDButton(int buttonID, const osg::Vec3& center, const std::st
     textOne->setFont("~/.uwsim/data/objects/arial.ttf");
     textOne->setText(textButton);
     textOne->setAxisAlignment(osgText::Text::SCREEN);
-//    textOne->setPosition(osg::Vec3(30, 40, 0));
-    textOne->setPosition(center);
+    textOne->setPosition(center);   //textOne->setPosition(osg::Vec3(30, 40, 0));
     textOne->setColor(osg::Vec4(0, 0, 0, 1));
 
 
     return HUDGeode2;
 }
 
+
+
 osg::Group* createHUD()
 {
     // Initialize root of scene:
-    osg::Group* root = new osg::Group();;
+    osg::Group* root = new osg::Group();
     // A geometry node for our HUD:
     osg::Geode* HUDGeode = new osg::Geode();
     // Text instance that wil show up in the HUD:
@@ -1134,20 +1244,51 @@ osg::Group* createHUD()
     menuTitle->setPosition(osg::Vec3(30, 110, 0));
     menuTitle->setColor(osg::Vec4(0, 0, 0, 1));
 
-    HUDModelViewMatrix->addChild(createHUDButton(1, osg::Vec3( 15, 40, 0), "Survey"));
-    HUDModelViewMatrix->addChild(createHUDButton(2, osg::Vec3(113, 50, 0), "Object\nRecovery"));
-    HUDModelViewMatrix->addChild(createHUDButton(3, osg::Vec3(226, 50, 0), "Panel\nIntervention"));
-    HUDModelViewMatrix->addChild(createHUDButton(4, osg::Vec3(339, 50, 0), "Dredging\nIntervention"));
-    HUDModelViewMatrix->addChild(createHUDButton(5, osg::Vec3(452, 50, 0), "Go to\nsurface"));
-    HUDModelViewMatrix->addChild(createHUDButton(6, osg::Vec3(565, 50, 0), "Test the\nsystem"));
-    HUDModelViewMatrix->addChild(createHUDButton(0, osg::Vec3(678, 40, 0), "Exit"));
+    osg::Group* menuInitGroup = new osg::Group();
+    menuInitGroup->addChild(createHUDButton(0, osg::Vec3( 15, 40, 0), "Survey"));
+    menuInitGroup->addChild(createHUDButton(1, osg::Vec3(113, 50, 0), "Object\nRecovery"));
+    menuInitGroup->addChild(createHUDButton(2, osg::Vec3(226, 50, 0), "Panel\nIntervention"));
+    menuInitGroup->addChild(createHUDButton(3, osg::Vec3(339, 50, 0), "Dredging\nIntervention"));
+    menuInitGroup->addChild(createHUDButton(4, osg::Vec3(452, 50, 0), "Go to\nsurface"));
+    menuInitGroup->addChild(createHUDButton(5, osg::Vec3(565, 50, 0), "Test the\nsystem"));
+    menuInitGroup->addChild(createHUDButton(6, osg::Vec3(678, 40, 0), "Exit"));
 
-    osg::Switch *switchN = new osg::Switch();
-    switchN->setNewChildDefaultValue(true);
+    osg::Group* menuDredging = new osg::Group();
+    menuDredging->addChild(createHUDButton(0, osg::Vec3( 15, 40, 0), "Set\ntarget"));
+    menuDredging->addChild(createHUDButton(1, osg::Vec3(113, 50, 0), "Target\nDetection"));
+    menuDredging->addChild(createHUDButton(2, osg::Vec3(226, 50, 0), "Station\nKeeping"));
+    menuDredging->addChild(createHUDButton(3, osg::Vec3(339, 50, 0), "Manual\nDredging"));
+    menuDredging->addChild(createHUDButton(4, osg::Vec3(452, 50, 0), "Back main\nMenu"));
 
-    switchN->addChild(root);
 
-    return switchN;
+
+    //Main menu -> display only the main menu
+    osg::Switch *switchMainMenu = new osg::Switch();
+    switchMainMenu->setName("switchMainMenu");
+    switchMainMenu->setNewChildDefaultValue(true);
+    switchMainMenu->addChild(menuInitGroup);
+    HUDModelViewMatrix->addChild(switchMainMenu);
+
+    //ObjectRecovery menu -> display only the ObjectRecovery menu
+    osg::Switch *switchDredgingMenu = new osg::Switch();
+    switchDredgingMenu->setName("switchDredgingMenu");
+    switchDredgingMenu->setNewChildDefaultValue(false);
+    switchDredgingMenu->addChild(menuDredging);
+    HUDModelViewMatrix->addChild(switchDredgingMenu);
+
+    std::vector<osg::Switch *> *switchVector = new std::vector<osg::Switch *>();
+    switchVector->push_back(switchMainMenu);
+    switchVector->push_back(switchDredgingMenu);
+
+    //Main switch -> display the background & childs
+    osg::Switch *switchRoot = new osg::Switch();
+    switchRoot->setName("switchRoot");
+    switchRoot->setNewChildDefaultValue(false);
+    switchRoot->setUpdateCallback(new showMenuCallback(switchVector));
+    switchRoot->addChild(root);
+
+
+    return switchRoot;
 }
 
 
