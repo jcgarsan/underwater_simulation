@@ -547,8 +547,9 @@ class showMenuCallback : public osg::NodeCallback
 public:
     void showMenuGetIDCallback(const std_msgs::Int8MultiArray::ConstPtr& msg)
     {
-        switchRootBool = msg->data[0];
-        menuID = msg->data[2];
+        switchRootBool  = msg->data[0];
+        menuID          = msg->data[2];
+        buttonID        = msg->data[3];
     }
 
     // Override the constructor
@@ -558,15 +559,56 @@ public:
         switchVec          = switchVector;
         userMenuData_sub_  = nh_.subscribe<std_msgs::Int8MultiArray>("userMenuData", 1, &showMenuCallback::showMenuGetIDCallback, this);
     };
+
+    void setButtonBackground(osg::Group* activeGroup)
+    {
+        cout << "activeGroup->getChild->getNumChildren: " << activeGroup->getNumChildren() << endl;
+        cout << "activeGroup->getChild->getName: " << activeGroup->getChild(buttonID)->getName() << endl;
+
+        // Create the texture for the button background without focus
+        osg::Texture2D* HUDTextureNoFocus = new osg::Texture2D;
+        HUDTextureNoFocus->setDataVariance(osg::Object::DYNAMIC);
+        osg::Image* hudImageNoFocus;
+        hudImageNoFocus = osgDB::readImageFile("~/.uwsim/data/textures/HUD_button_background.jpg");
+        HUDTextureNoFocus->setImage(hudImageNoFocus);
+
+        for (int i=0; i<activeGroup->getNumChildren();i++)
+        {
+            // Create and set up a state set using the texture from above:
+            osg::StateSet* HUDStateSet2 = activeGroup->getChild(i)->getStateSet(); 
+            activeGroup->getChild(i)->setStateSet(HUDStateSet2);
+            HUDStateSet2->setTextureAttributeAndModes(0,HUDTextureNoFocus,osg::StateAttribute::ON);
+        }
+
+    }
     
     void operator()(osg::Node* node, osg::NodeVisitor* nv)
     {
         osg::Switch* switchRoot = dynamic_cast<osg::Switch*>(node);
+        osg::Group* currentGroup;
+
+        // Create the texture for the button background with focus
+        osg::Texture2D* HUDTextureFocus = new osg::Texture2D;
+        HUDTextureFocus->setDataVariance(osg::Object::DYNAMIC);
+        osg::Image* hudImageFocus;
+        hudImageFocus = osgDB::readImageFile("~/.uwsim/data/textures/exit-icon.png");
+        HUDTextureFocus->setImage(hudImageFocus);
+
+        // Create the texture for the button background without focus
+        osg::Texture2D* HUDTextureNoFocus = new osg::Texture2D;
+        HUDTextureNoFocus->setDataVariance(osg::Object::DYNAMIC);
+        osg::Image* hudImageNoFocus;
+        hudImageNoFocus = osgDB::readImageFile("~/.uwsim/data/textures/HUD_button_background.jpg");
+        HUDTextureNoFocus->setImage(hudImageNoFocus);
 
         for (int i=0; i<switchVec[0].size();i++)
         {
             if (i == menuID)
+            {
                 switchVec[0][i]->setAllChildrenOn();
+                currentGroup = switchVec[0][menuID]->getChild(0)->asGroup();
+                setButtonBackground(currentGroup);
+            }
             else
                 switchVec[0][i]->setAllChildrenOff();    
         }
@@ -574,75 +616,38 @@ public:
             switchRoot->setAllChildrenOn();
         else
             switchRoot->setAllChildrenOff();
+        
+/*       cout << "getChild: " << switchVec[0][menuID]->getChild(0) << endl;
+        cout << "switchVec[0][menuID]->getChild(0)->getName(): " << switchVec[0][menuID]->getChild(0)->getName() << endl;
+        currentGroup = switchVec[0][menuID]->getChild(0)->asGroup();
+        cout << "currentGroup->getChild->getNumChildren: " << currentGroup->getNumChildren() << endl;
+        cout << "currentGroup->getChild->getName: " << currentGroup->getChild(buttonID)->getName() << endl;
+*/
+        for (int i=0; i<currentGroup->getNumChildren();i++)
+        {
+            if (i == buttonID)
+            {
+                // Create and set up a state set using the texture from above:
+                osg::StateSet* HUDStateSet = currentGroup->getChild(i)->getStateSet(); 
+                currentGroup->getChild(i)->setStateSet(HUDStateSet);
+                HUDStateSet->setTextureAttributeAndModes(0,HUDTextureFocus,osg::StateAttribute::ON);
+            }
+            else
+            {
+                // Create and set up a state set using the texture from above:
+                osg::StateSet* HUDStateSet2 = currentGroup->getChild(i)->getStateSet(); 
+                currentGroup->getChild(i)->setStateSet(HUDStateSet2);
+                HUDStateSet2->setTextureAttributeAndModes(0,HUDTextureNoFocus,osg::StateAttribute::ON);
+            }
+        }
 
-        // Continue callbacks for chlildren too.
+        // Continue callbacks for chlildren too. 
         ((osg::NodeCallback*) this)->traverse(node, nv);
     };
 
 private:
     int                         switchRootBool;
     int                         menuID;
-    ros::NodeHandle             nh_;
-    ros::Subscriber             userMenuData_sub_;
-    std::vector<osg::Switch* >   *switchVec;
-};
-
-
-
-class buttonFocusCallback : public osg::NodeCallback
-{
-public:
-    void buttonFocusGetIDCallback(const std_msgs::Int8MultiArray::ConstPtr& msg)
-    {
-        buttonID = msg->data[3];
-    }
-
-    // Override the constructor
-    buttonFocusCallback()
-    {
-        buttonID            = 0;
-        userMenuData_sub_   = nh_.subscribe<std_msgs::Int8MultiArray>("userMenuData", 1, &buttonFocusCallback::buttonFocusGetIDCallback, this);
-    };
-    
-    void operator()(osg::Node* node, osg::NodeVisitor* nv)
-    {
-        osg::Switch* switchRoot = dynamic_cast<osg::Switch*>(node);
-        osg::Group* currentGroup = node->asGroup();
-        osg::Node* foundNode;
-        ostringstream buttonFocus;
-
-        buttonFocus << buttonID;
-        
-        if (currentGroup) 
-        {
-            cout << "getName: " << currentGroup->getChild(0)->getName() << endl;
-
-//            if (currentGroup->getChild(0)->getChild(0).getName() == buttonFocus.str())
-//            {
-//                cout << "done: " << buttonID << endl;
-//            }
-        }
-
-
-
-
-/*        for (int i=0; i<switchVec[0].size();i++)
-        {
-            if (i == menuID)
-                switchVec[0][i]->setAllChildrenOn();
-            else
-                switchVec[0][i]->setAllChildrenOff();    
-        }
-        if (switchRootBool)
-            switchRoot->setAllChildrenOn();
-        else
-            switchRoot->setAllChildrenOff();
-*/
-        // Continue callbacks for chlildren too.
-        ((osg::NodeCallback*) this)->traverse(node, nv);
-    };
-
-private:
     int                         buttonID;
     ros::NodeHandle             nh_;
     ros::Subscriber             userMenuData_sub_;
@@ -1039,12 +1044,12 @@ osg::Group* createBarGauge(float width, float height, float percentage)
 
 
 
-osg::Geode* createHUDButton(int buttonID, const osg::Vec3& center, const std::string& textButton)
+osg::Geode* createHUDButton(const std::string& buttonIDstr, const osg::Vec3& center, const std::string& textButton)
 {
     // A geometry node for our HUD:
     osg::Geode* HUDGeode2 = new osg::Geode();
     // Setup the button ID
-    std::string Id = "button" + buttonID;
+    std::string Id = "button_" + buttonIDstr;
     HUDGeode2->setName(Id);
     // Text instance that wil show up in the HUDButton:
     osgText::Text* textOne = new osgText::Text();
@@ -1054,7 +1059,10 @@ osg::Geode* createHUDButton(int buttonID, const osg::Vec3& center, const std::st
 
     // Set up the button size & position
     osg::Vec3Array* HUDBackgroundVertices2 = new osg::Vec3Array;
-    if (buttonID == 0)
+
+    int buttonIDint = atoi(buttonIDstr.c_str());
+
+    if (buttonIDint == 0)
     {   
         HUDBackgroundVertices2->push_back(osg::Vec3(678,   0, -1));
         HUDBackgroundVertices2->push_back(osg::Vec3(791,   0, -1));
@@ -1063,10 +1071,10 @@ osg::Geode* createHUDButton(int buttonID, const osg::Vec3& center, const std::st
     }
     else
     {
-        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonID-1),       0, -1));
-        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonID-1)+100,   0, -1));
-        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonID-1)+100, 100, -1));
-        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonID-1),     100, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonIDint-1),       0, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonIDint-1)+100,   0, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonIDint-1)+100, 100, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(113*(buttonIDint-1),     100, -1));
     }
 
     osg::DrawElementsUInt* HUDBackgroundIndices2 = new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0);
@@ -1239,26 +1247,28 @@ osg::Group* createHUD()
     // Set up the parameters for the text we'll add to the HUD:
     menuTitle->setCharacterSize(25);
     menuTitle->setFont("~/.uwsim/data/objects/arial.ttf");
-    menuTitle->setText("New user HUDMenu");
+    menuTitle->setText("..:: UWSim user menu ::..");
     menuTitle->setAxisAlignment(osgText::Text::SCREEN);
     menuTitle->setPosition(osg::Vec3(30, 110, 0));
     menuTitle->setColor(osg::Vec4(0, 0, 0, 1));
 
     osg::Group* menuInitGroup = new osg::Group();
-    menuInitGroup->addChild(createHUDButton(0, osg::Vec3( 15, 40, 0), "Survey"));
-    menuInitGroup->addChild(createHUDButton(1, osg::Vec3(113, 50, 0), "Object\nRecovery"));
-    menuInitGroup->addChild(createHUDButton(2, osg::Vec3(226, 50, 0), "Panel\nIntervention"));
-    menuInitGroup->addChild(createHUDButton(3, osg::Vec3(339, 50, 0), "Dredging\nIntervention"));
-    menuInitGroup->addChild(createHUDButton(4, osg::Vec3(452, 50, 0), "Go to\nsurface"));
-    menuInitGroup->addChild(createHUDButton(5, osg::Vec3(565, 50, 0), "Test the\nsystem"));
-    menuInitGroup->addChild(createHUDButton(6, osg::Vec3(678, 40, 0), "Exit"));
+    menuInitGroup->setName("MainMenu");
+    menuInitGroup->addChild(createHUDButton("0", osg::Vec3( 15, 40, 0), "Survey"));
+    menuInitGroup->addChild(createHUDButton("1", osg::Vec3(113, 50, 0), "Object\nRecovery"));
+    menuInitGroup->addChild(createHUDButton("2", osg::Vec3(226, 50, 0), "Panel\nIntervention"));
+    menuInitGroup->addChild(createHUDButton("3", osg::Vec3(339, 50, 0), "Dredging\nIntervention"));
+    menuInitGroup->addChild(createHUDButton("4", osg::Vec3(452, 50, 0), "Go to\nsurface"));
+    menuInitGroup->addChild(createHUDButton("5", osg::Vec3(565, 50, 0), "Test the\nsystem"));
+    menuInitGroup->addChild(createHUDButton("6", osg::Vec3(678, 40, 0), "Exit"));
 
     osg::Group* menuDredging = new osg::Group();
-    menuDredging->addChild(createHUDButton(0, osg::Vec3( 15, 40, 0), "Set\ntarget"));
-    menuDredging->addChild(createHUDButton(1, osg::Vec3(113, 50, 0), "Target\nDetection"));
-    menuDredging->addChild(createHUDButton(2, osg::Vec3(226, 50, 0), "Station\nKeeping"));
-    menuDredging->addChild(createHUDButton(3, osg::Vec3(339, 50, 0), "Manual\nDredging"));
-    menuDredging->addChild(createHUDButton(4, osg::Vec3(452, 50, 0), "Back main\nMenu"));
+    menuDredging->setName("DredgingMenu");
+    menuDredging->addChild(createHUDButton("0", osg::Vec3( 15, 40, 0), "Set\ntarget"));
+    menuDredging->addChild(createHUDButton("1", osg::Vec3(113, 50, 0), "Target\nDetection"));
+    menuDredging->addChild(createHUDButton("2", osg::Vec3(226, 50, 0), "Station\nKeeping"));
+    menuDredging->addChild(createHUDButton("3", osg::Vec3(339, 50, 0), "Manual\nDredging"));
+    menuDredging->addChild(createHUDButton("4", osg::Vec3(452, 50, 0), "Back main\nMenu"));
 
 
 
