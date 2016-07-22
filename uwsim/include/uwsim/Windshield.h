@@ -554,10 +554,11 @@ public:
     }
 
     // Override the constructor
-    showMenuCallback(std::vector<osg::Switch *> *switchVector)
+    showMenuCallback(std::vector<osg::Switch *> *switchVector, osgText::Text menuName)
     {
         switchRootBool     = 0;
         switchVec          = switchVector;
+        menuTitle          = menuName;
         userMenuData_sub_  = nh_.subscribe<std_msgs::Int8MultiArray>("userMenuData", 1, &showMenuCallback::showMenuGetIDCallback, this);
     };
 
@@ -601,29 +602,21 @@ public:
         hudImageNoFocus = osgDB::readImageFile("~/.uwsim/data/textures/HUD_button_background.jpg");
         HUDTextureNoFocus->setImage(hudImageNoFocus);
 
-        // Add the text (Text class is derived from drawable) to the geode:
-//        HUDGeode->addDrawable(menuTitle);
-        // Set up the parameters for the text we'll add to the HUD:
-        menuTitle->setCharacterSize(25);
-        menuTitle->setFont("~/.uwsim/data/objects/arial.ttf");
-        menuTitle->setAxisAlignment(osgText::Text::SCREEN);
-        menuTitle->setPosition(osg::Vec3(30, 110, 0));
-        menuTitle->setColor(osg::Vec4(0, 0, 0, 1));
-
         //Disable the visualization of all menus
         for (int i=0; i<switchVec[0].size();i++)
                 switchVec[0][i]->setAllChildrenOff();    
         //Enable the selected menu
         switchVec[0][menuID]->setAllChildrenOn();
 
-//        cout << "switchVec[0][0]->getChild(0)->getName(): " << switchVec[0][menuID]->getChild(0)->getName() << endl;
-//        cout << "switchVec[0][0]->getName(): " << switchVec[0][menuID]->getName() << endl;
-//        menuTitle->setText(currentGroup->getChild(buttonID)->getName());
-//        currentGroup->addDrawable(menuTitle);
-
         //Initialize all the buttons background        
         currentGroup = switchVec[0][menuID]->getChild(0)->asGroup();
         setButtonBackground(currentGroup);
+
+        //Switch Main menu title, depening on the user menu selection
+        menuTitle->setText(switchVec[0][menuID]->getChild(0)->getName());
+        cout << "switchVec[0][menuID]->getChild(0)->getName(): " << switchVec[0][menuID]->getChild(0)->getName() << endl;
+        cout << "menuTitle: " << &menuTitle << endl;
+
 
         //Enable the main menu
         if (switchRootBool)
@@ -668,6 +661,7 @@ private:
     ros::NodeHandle             nh_;
     ros::Subscriber             userMenuData_sub_;
     std::vector<osg::Switch* >  *switchVec;
+    osgText::Text*              menuTitle;
 };
 
 
@@ -1315,7 +1309,7 @@ osg::Group* createHUD()
     osg::Switch *switchRoot = new osg::Switch();
     switchRoot->setName("switchRoot");
     switchRoot->setNewChildDefaultValue(false);
-    switchRoot->setUpdateCallback(new showMenuCallback(switchVector));
+    switchRoot->setUpdateCallback(new showMenuCallback(switchVector, menuTitle));
     switchRoot->addChild(root);
 
     return switchRoot;
