@@ -17,15 +17,15 @@
     <fog>
       <density> 0.05 </density>		<!-- ISR_experiments 0.05, original 0.1 -->
       <color>
-	<r>0.017</r>
-	<g>0.027</g>
-	<b>0.079</b>
+      	<r>0.017</r>
+      	<g>0.027</g>
+      	<b>0.079</b>
       </color>
     </fog>
     <color>
-	<r>0.017</r>
-	<g>0.027</g>
-	<b>0.079</b>
+    	<r>0.017</r>
+    	<g>0.027</g>
+    	<b>0.079</b>
     </color>
     <attenuation>
       <r>0.015</r>
@@ -58,13 +58,13 @@
     <aspectRatio> 1.33 </aspectRatio>
     <near> 1 </near>
     <far> 10000 </far>			<!-- 300 -->
-    <position>				<!-- 16, 9, -7 -->
-      <x> -0.3 </x>			<!-- 0, 2, 0 -->
+    <position>				      <!-- 16, 9, -7 -->
+      <x> -0.3 </x>			    <!-- 0, 2, 0 -->
       <y> 0 </y>
       <z> 0 </z>
     </position>
-    <lookAt>				<!-- 5, 7, -10 -->
-      <x> 0 </x>			<!-- 0.3, 0.1, 0 -->
+    <lookAt>				        <!-- 5, 7, -10 -->
+      <x> 0 </x>			       <!-- 0.3, 0.1, 0 -->
       <y> 0 </y>
       <z> 0 </z>
     </lookAt>
@@ -108,7 +108,6 @@
         <y>1.57 </y>
       </orientation>
     </virtualCamera>
-    
     <rangeSensor>
       <name>sonar</name>
       <relativeTo>part0</relativeTo>
@@ -125,7 +124,6 @@
         <y>0</y>
       </orientation>
     </rangeSensor>
-
     <pressureSensor>
       <name>pressureSensor</name>
       <relativeTo>base_link</relativeTo>
@@ -141,8 +139,7 @@
       </orientation>
       <std>0.02</std>
     </pressureSensor>
-
-	<dvlSensor>
+    <dvlSensor>
       <name>DVLSensor</name>
       <relativeTo>base_link</relativeTo>
       <position>
@@ -157,7 +154,6 @@
       </orientation>
       <std>0.0015</std>
     </dvlSensor>
-    
     <ForceSensor>
       <name>ForceG500</name>
       <target>base_link</target>
@@ -172,7 +168,20 @@
         <z>3.14</z>
       </offsetr>
     </ForceSensor>
-
+    <DredgeTool>
+      <name>dredgetool</name>
+      <target> end_effector</target>
+      <offsetp>
+        <x>0</x>
+        <y>0</y>
+        <z>0</z>
+      </offsetp>
+      <offsetr>
+        <x>0</x>
+        <y>0</y>
+        <z>0</z>
+      </offsetr>
+    </DredgeTool>
   </vehicle>
 
 	<object>
@@ -199,7 +208,7 @@
 	</physics>
 	</object>
   
-    <object>
+  <object>
     <name>terrain</name>
     <file>terrain/shipwreck/terrain.ive</file>
     <position>
@@ -228,6 +237,24 @@
     </physics>
   </object>
 
+  <object buried="0.75">
+    <name> amphora </name>
+    <file> objects/amphora.osg  </file>
+    <position>
+      <x> 1</x>
+      <y> 0 </y>
+      <z> 13 </z>
+    </position>
+    <orientation>
+      <r>1.57</r>
+      <p>0 </p>
+      <y>-1.57 </y>
+    </orientation>
+    <physics>
+      <mass> 0 </mass>
+      <collisionShapeType> trimesh </collisionShapeType>
+    </physics>
+  </object>
 
   <rosInterfaces>
     <!-- <ROSOdomToPAT>
