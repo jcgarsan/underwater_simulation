@@ -554,7 +554,7 @@ public:
     }
 
     // Override the constructor
-    showMenuCallback(std::vector<osg::Switch *> *switchVector, osgText::Text menuName)
+    showMenuCallback(std::vector<osg::Switch *> *switchVector, osgText::Text *menuName)
     {
         switchRootBool     = 0;
         switchVec          = switchVector;
@@ -587,7 +587,6 @@ public:
     {
         osg::Switch* switchRoot = dynamic_cast<osg::Switch*>(node);
         osg::Group* currentGroup;
-        osgText::Text* menuTitle = new osgText::Text();
 
         // Create the texture for the button background with focus
         osg::Texture2D* HUDTextureFocus = new osg::Texture2D;
