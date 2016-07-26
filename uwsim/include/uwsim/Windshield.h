@@ -613,9 +613,8 @@ public:
 
         //Switch Main menu title, depening on the user menu selection
         menuTitle->setText(switchVec[0][menuID]->getChild(0)->getName());
-        cout << "switchVec[0][menuID]->getChild(0)->getName(): " << switchVec[0][menuID]->getChild(0)->getName() << endl;
-        cout << "menuTitle: " << &menuTitle << endl;
-
+/*        cout << "switchVec[0][menuID]->getChild(0)->getName(): " << switchVec[0][menuID]->getChild(0)->getName() << endl;
+        cout << "menuTitle: " << &menuTitle << endl;*/
 
         //Enable the main menu
         if (switchRootBool)
