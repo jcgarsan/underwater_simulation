@@ -64,7 +64,7 @@
       <z> 0 </z>
     </position>
     <lookAt>				        <!-- 5, 7, -10 -->
-      <x> 0 </x>			       <!-- 0.3, 0.1, 0 -->
+      <x> 0 </x>			      <!-- 0.3, 0.1, 0 -->
       <y> 0 </y>
       <z> 0 </z>
     </lookAt>
@@ -241,8 +241,8 @@
     <name> amphora </name>
     <file> objects/amphora.osg  </file>
     <position>
-      <x> 1</x>
-      <y> 0 </y>
+      <x> 10 </x>       <!-- 1, 0, 13 -->
+      <y> 5  </y>
       <z> 13 </z>
     </position>
     <orientation>
