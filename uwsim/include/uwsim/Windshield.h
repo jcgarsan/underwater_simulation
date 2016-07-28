@@ -1072,10 +1072,10 @@ osg::Geode* createHUDButton(const std::string& buttonIDstr, const osg::Vec3& cen
 
     if (buttonIDint == 0)
     {   
-        HUDBackgroundVertices2->push_back(osg::Vec3(0,   0, -1));
-        HUDBackgroundVertices2->push_back(osg::Vec3(113,   0, -1));
-        HUDBackgroundVertices2->push_back(osg::Vec3(113, 100, -1));
-        HUDBackgroundVertices2->push_back(osg::Vec3(0, 100, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(0,     0, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(100,   0, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(100, 100, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(0,   100, -1));
     }
     else
     {
