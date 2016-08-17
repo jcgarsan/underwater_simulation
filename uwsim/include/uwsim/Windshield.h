@@ -1272,6 +1272,26 @@ osg::Group* createHUD()
     menuInitGroup->addChild(createHUDButton("5", osg::Vec3(565, 50, 0), "Test the\nsystem"));
     menuInitGroup->addChild(createHUDButton("6", osg::Vec3(678, 40, 0), "Exit"));
 
+    osg::Group* menuSurvey = new osg::Group();
+    menuSurvey->setName("SurveyMenu");
+    menuSurvey->addChild(createHUDButton("0", osg::Vec3( 15, 40, 0), "Button\n1"));
+    menuSurvey->addChild(createHUDButton("1", osg::Vec3(113, 50, 0), "Button\n2"));
+    menuSurvey->addChild(createHUDButton("2", osg::Vec3(226, 50, 0), "Button\n3"));
+    menuSurvey->addChild(createHUDButton("3", osg::Vec3(339, 50, 0), "Back main\nMenu"));
+
+    osg::Group* menuObjectRecovery = new osg::Group();
+    menuObjectRecovery->setName("ObjectRecoveryMenu");
+    menuObjectRecovery->addChild(createHUDButton("0", osg::Vec3( 15, 40, 0), "Set\ntarget"));
+    menuObjectRecovery->addChild(createHUDButton("1", osg::Vec3(113, 50, 0), "Target\nDetection"));
+    menuObjectRecovery->addChild(createHUDButton("2", osg::Vec3(226, 50, 0), "Station\nKeeping"));
+    menuObjectRecovery->addChild(createHUDButton("3", osg::Vec3(339, 50, 0), "Manual\nRecovery"));
+    menuObjectRecovery->addChild(createHUDButton("4", osg::Vec3(452, 50, 0), "Back main\nMenu"));
+    
+    osg::Group* menuPanelIntervention = new osg::Group();
+    menuPanelIntervention->setName("PanelInterventionMenu");
+    menuPanelIntervention->addChild(createHUDButton("0", osg::Vec3( 15, 40, 0), "Set\ntarget"));
+    menuPanelIntervention->addChild(createHUDButton("1", osg::Vec3(113, 50, 0), "Back main\nMenu"));
+
     osg::Group* menuDredging = new osg::Group();
     menuDredging->setName("DredgingMenu");
     menuDredging->addChild(createHUDButton("0", osg::Vec3( 15, 40, 0), "Set\ntarget"));
@@ -1288,7 +1308,28 @@ osg::Group* createHUD()
     switchMainMenu->addChild(menuInitGroup);
     HUDModelViewMatrix->addChild(switchMainMenu);
 
-    //DredgingMenu menu -> display only the DredgingMenu menu
+    //Survey menu
+    osg::Switch *switchSurveyMenu = new osg::Switch();
+    switchSurveyMenu->setName("switchSurveyMenu");
+    switchSurveyMenu->setNewChildDefaultValue(false);
+    switchSurveyMenu->addChild(menuSurvey);
+    HUDModelViewMatrix->addChild(switchSurveyMenu);
+
+    //ObjectRecovery menu
+    osg::Switch *switchObjectRecoveryMenu = new osg::Switch();
+    switchObjectRecoveryMenu->setName("switchObjectRecoveryMenu");
+    switchObjectRecoveryMenu->setNewChildDefaultValue(false);
+    switchObjectRecoveryMenu->addChild(menuObjectRecovery);
+    HUDModelViewMatrix->addChild(switchObjectRecoveryMenu);
+
+    //DredgingMenu menu
+    osg::Switch *switchPanelInterventionMenu = new osg::Switch();
+    switchPanelInterventionMenu->setName("switchPanelInterventionMenu");
+    switchPanelInterventionMenu->setNewChildDefaultValue(false);
+    switchPanelInterventionMenu->addChild(menuPanelIntervention);
+    HUDModelViewMatrix->addChild(switchPanelInterventionMenu);
+
+    //DredgingMenu menu
     osg::Switch *switchDredgingMenu = new osg::Switch();
     switchDredgingMenu->setName("switchDredgingMenu");
     switchDredgingMenu->setNewChildDefaultValue(false);
@@ -1298,9 +1339,9 @@ osg::Group* createHUD()
     //We use a vector to create an index of each switchXmenu
     std::vector<osg::Switch *> *switchVector = new std::vector<osg::Switch *>();
     switchVector->push_back(switchMainMenu);
-    switchVector->push_back(switchMainMenu);        //Simulates Survey menu
-    switchVector->push_back(switchMainMenu);        //Simulates ObjectRecovery menu
-    switchVector->push_back(switchMainMenu);        //Simulates PanelIntervention menu
+    switchVector->push_back(switchSurveyMenu);
+    switchVector->push_back(switchObjectRecoveryMenu);
+    switchVector->push_back(switchPanelInterventionMenu);
     switchVector->push_back(switchDredgingMenu);
 
     //Main switch -> display the background & childs
