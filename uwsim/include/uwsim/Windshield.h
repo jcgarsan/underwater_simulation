@@ -592,7 +592,7 @@ public:
         osg::Texture2D* HUDTextureFocus = new osg::Texture2D;
         HUDTextureFocus->setDataVariance(osg::Object::DYNAMIC);
         osg::Image* hudImageFocus;
-        hudImageFocus = osgDB::readImageFile("~/.uwsim/data/textures/exit-icon.png");
+        hudImageFocus = osgDB::readImageFile("~/.uwsim/data/textures/HUD_button_background_focused.jpg"); //exit-icon.png");
         HUDTextureFocus->setImage(hudImageFocus);
         // Create the texture for the button background without focus
         osg::Texture2D* HUDTextureNoFocus = new osg::Texture2D;
