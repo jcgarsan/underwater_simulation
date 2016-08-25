@@ -401,21 +401,25 @@ public:
         osg::Geode* geode       = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
         osgText::Text* text     = (osgText::Text *) geode->getDrawable(0);;
 
-        if (_state == 1)
+        switch(_state)
         {
-            alphaChannel = 1;
-            text->setText("Mission succeed");
+            case 0:
+                alphaChannel = 1;
+                text->setText("Mission failed");
+                break;
+            case 2:
+                alphaChannel = 1;
+                text->setText("Mission in progress");
+                break;
+            case 3:
+                alphaChannel = 1;
+                text->setText("Mission succeed");
+                break;
+            default:
+                alphaChannel = 0;
+                text->setText("");
+                break;
         }
-        else if (_state == 0)
-        {
-            alphaChannel = 1;
-            text->setText("Mission failed");
-        }
-        else
-        {
-            alphaChannel = 0;
-            text->setText("");
-        }            
 
         text->setColor(osg::Vec4(1, 1, 1, alphaChannel));
 
@@ -592,7 +596,7 @@ public:
         osg::Texture2D* HUDTextureFocus = new osg::Texture2D;
         HUDTextureFocus->setDataVariance(osg::Object::DYNAMIC);
         osg::Image* hudImageFocus;
-        hudImageFocus = osgDB::readImageFile("~/.uwsim/data/textures/HUD_button_background_focused.jpg"); //exit-icon.png");
+        hudImageFocus = osgDB::readImageFile("~/.uwsim/data/textures/HUD_button_background_focused.jpg");
         HUDTextureFocus->setImage(hudImageFocus);
         // Create the texture for the button background without focus
         osg::Texture2D* HUDTextureNoFocus = new osg::Texture2D;
