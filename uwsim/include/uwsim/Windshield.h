@@ -33,6 +33,7 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Int8MultiArray.h>
 #include <std_msgs/Int8.h>
+#include <std_msgs/String.h>
 #include <underwater_sensor_msgs/Pressure.h>
 #include <sensor_msgs/Range.h>
 
@@ -399,23 +400,27 @@ public:
         float alphaChannel;
         osg::Group* currGroup   = node->asGroup();
         osg::Geode* geode       = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
-        osgText::Text* text     = (osgText::Text *) geode->getDrawable(0);;
+        osgText::Text* text     = (osgText::Text *) geode->getDrawable(0);
 
-        if (_state == 1)
+        switch(_state)
         {
-            alphaChannel = 1;
-            text->setText("Mission succeed");
+            case 0:
+                alphaChannel = 1;
+                text->setText("Mission failed");
+                break;
+            case 2:
+                alphaChannel = 1;
+                text->setText("Mission in progress");
+                break;
+            case 3:
+                alphaChannel = 1;
+                text->setText("Mission succeed");
+                break;
+            default:
+                alphaChannel = 0;
+                text->setText("");
+                break;
         }
-        else if (_state == 0)
-        {
-            alphaChannel = 1;
-            text->setText("Mission failed");
-        }
-        else
-        {
-            alphaChannel = 0;
-            text->setText("");
-        }            
 
         text->setColor(osg::Vec4(1, 1, 1, alphaChannel));
 
@@ -554,10 +559,11 @@ public:
     }
 
     // Override the constructor
-    showMenuCallback(std::vector<osg::Switch *> *switchVector)
+    showMenuCallback(std::vector<osg::Switch *> *switchVector, osgText::Text *menuName)
     {
         switchRootBool     = 0;
         switchVec          = switchVector;
+        menuTitle          = menuName;
         userMenuData_sub_  = nh_.subscribe<std_msgs::Int8MultiArray>("userMenuData", 1, &showMenuCallback::showMenuGetIDCallback, this);
     };
 
@@ -586,13 +592,12 @@ public:
     {
         osg::Switch* switchRoot = dynamic_cast<osg::Switch*>(node);
         osg::Group* currentGroup;
-        osgText::Text* menuTitle = new osgText::Text();
 
         // Create the texture for the button background with focus
         osg::Texture2D* HUDTextureFocus = new osg::Texture2D;
         HUDTextureFocus->setDataVariance(osg::Object::DYNAMIC);
         osg::Image* hudImageFocus;
-        hudImageFocus = osgDB::readImageFile("~/.uwsim/data/textures/exit-icon.png");
+        hudImageFocus = osgDB::readImageFile("~/.uwsim/data/textures/HUD_button_background_focused.jpg");
         HUDTextureFocus->setImage(hudImageFocus);
         // Create the texture for the button background without focus
         osg::Texture2D* HUDTextureNoFocus = new osg::Texture2D;
@@ -601,29 +606,20 @@ public:
         hudImageNoFocus = osgDB::readImageFile("~/.uwsim/data/textures/HUD_button_background.jpg");
         HUDTextureNoFocus->setImage(hudImageNoFocus);
 
-        // Add the text (Text class is derived from drawable) to the geode:
-//        HUDGeode->addDrawable(menuTitle);
-        // Set up the parameters for the text we'll add to the HUD:
-        menuTitle->setCharacterSize(25);
-        menuTitle->setFont("~/.uwsim/data/objects/arial.ttf");
-        menuTitle->setAxisAlignment(osgText::Text::SCREEN);
-        menuTitle->setPosition(osg::Vec3(30, 110, 0));
-        menuTitle->setColor(osg::Vec4(0, 0, 0, 1));
-
         //Disable the visualization of all menus
         for (int i=0; i<switchVec[0].size();i++)
                 switchVec[0][i]->setAllChildrenOff();    
         //Enable the selected menu
         switchVec[0][menuID]->setAllChildrenOn();
 
-//        cout << "switchVec[0][0]->getChild(0)->getName(): " << switchVec[0][menuID]->getChild(0)->getName() << endl;
-//        cout << "switchVec[0][0]->getName(): " << switchVec[0][menuID]->getName() << endl;
-//        menuTitle->setText(currentGroup->getChild(buttonID)->getName());
-//        currentGroup->addDrawable(menuTitle);
-
         //Initialize all the buttons background        
         currentGroup = switchVec[0][menuID]->getChild(0)->asGroup();
         setButtonBackground(currentGroup);
+
+        //Switch Main menu title, depening on the user menu selection
+        menuTitle->setText(switchVec[0][menuID]->getChild(0)->getName());
+/*        cout << "switchVec[0][menuID]->getChild(0)->getName(): " << switchVec[0][menuID]->getChild(0)->getName() << endl;
+        cout << "menuTitle: " << &menuTitle << endl;*/
 
         //Enable the main menu
         if (switchRootBool)
@@ -668,8 +664,65 @@ private:
     ros::NodeHandle             nh_;
     ros::Subscriber             userMenuData_sub_;
     std::vector<osg::Switch* >  *switchVec;
+    osgText::Text*              menuTitle;
 };
 
+
+class hudFeedbackCallback : public osg::NodeCallback
+{
+public:
+    void hudTextCallback(const std_msgs::String::ConstPtr& msg)
+    {
+        hudMessage = msg->data;
+    }
+
+    void feedbackStateCallback(const std_msgs::Int8::ConstPtr& msg)
+    {
+        feedbackState = msg->data;
+    }
+
+    // Override the constructor
+    hudFeedbackCallback(osgText::Text *message) 
+    {
+        feedbackMessage =  message;
+        hudFeedback_sub_ = nh_.subscribe<std_msgs::String>("HUDfeedback", 1000, &hudFeedbackCallback::hudTextCallback, this);
+        feedbackState = -1;
+        missionControl_sub_ = nh_.subscribe<std_msgs::Int8>("missionControlAlarm", 1, &hudFeedbackCallback::feedbackStateCallback, this);
+    };
+
+
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        switch(feedbackState)
+        {
+            case 0:
+                feedbackMessage->setText("Mission failed");
+                break;
+            case 2:
+                feedbackMessage->setText("Mission in progress: " + hudMessage);
+                break;
+            case 3:
+                feedbackMessage->setText("Mission succeed");
+                break;
+            default:
+                feedbackMessage->setText("");
+                break;
+        }
+
+        //feedbackMessage->setText(hudMessage);
+
+        // Continue callbacks for chlildren too. 
+        ((osg::NodeCallback*) this)->traverse(node, nv);
+    };
+
+private:
+    ros::NodeHandle     nh_;
+    ros::Subscriber     hudFeedback_sub_;
+    ros::Subscriber     missionControl_sub_;
+    osgText::Text*      feedbackMessage;
+    std::string         hudMessage;
+    int                 feedbackState;
+};
 
 
 osg::Geode* createSphere(float radius, osg::Vec4 color)
@@ -886,7 +939,7 @@ osg::Group* create3DText2()
     text->setCharacterSize(characterSize);
     text->setPosition(osg::Vec3(0.7, -0.5, 0));
     text->setAxisAlignment(osgText::Text::SCREEN);
-    text->setText("Mission succeed");
+    text->setText("Mission feedback");
     geode->addDrawable(text);
     rootNode->addChild(geode);
 
@@ -1080,10 +1133,10 @@ osg::Geode* createHUDButton(const std::string& buttonIDstr, const osg::Vec3& cen
 
     if (buttonIDint == 0)
     {   
-        HUDBackgroundVertices2->push_back(osg::Vec3(0,   0, -1));
-        HUDBackgroundVertices2->push_back(osg::Vec3(113,   0, -1));
-        HUDBackgroundVertices2->push_back(osg::Vec3(113, 100, -1));
-        HUDBackgroundVertices2->push_back(osg::Vec3(0, 100, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(0,     0, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(100,   0, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(100, 100, -1));
+        HUDBackgroundVertices2->push_back(osg::Vec3(0,   100, -1));
     }
     else
     {
@@ -1280,6 +1333,26 @@ osg::Group* createHUD()
     menuInitGroup->addChild(createHUDButton("5", osg::Vec3(565, 50, 0), "Test the\nsystem"));
     menuInitGroup->addChild(createHUDButton("6", osg::Vec3(678, 40, 0), "Exit"));
 
+    osg::Group* menuSurvey = new osg::Group();
+    menuSurvey->setName("SurveyMenu");
+    menuSurvey->addChild(createHUDButton("0", osg::Vec3( 15, 40, 0), "Button\n1"));
+    menuSurvey->addChild(createHUDButton("1", osg::Vec3(113, 50, 0), "Button\n2"));
+    menuSurvey->addChild(createHUDButton("2", osg::Vec3(226, 50, 0), "Button\n3"));
+    menuSurvey->addChild(createHUDButton("3", osg::Vec3(339, 50, 0), "Back main\nMenu"));
+
+    osg::Group* menuObjectRecovery = new osg::Group();
+    menuObjectRecovery->setName("ObjectRecoveryMenu");
+    menuObjectRecovery->addChild(createHUDButton("0", osg::Vec3( 15, 40, 0), "Set\ntarget"));
+    menuObjectRecovery->addChild(createHUDButton("1", osg::Vec3(113, 50, 0), "Target\nDetection"));
+    menuObjectRecovery->addChild(createHUDButton("2", osg::Vec3(226, 50, 0), "Station\nKeeping"));
+    menuObjectRecovery->addChild(createHUDButton("3", osg::Vec3(339, 50, 0), "Manual\nRecovery"));
+    menuObjectRecovery->addChild(createHUDButton("4", osg::Vec3(452, 50, 0), "Back main\nMenu"));
+    
+    osg::Group* menuPanelIntervention = new osg::Group();
+    menuPanelIntervention->setName("PanelInterventionMenu");
+    menuPanelIntervention->addChild(createHUDButton("0", osg::Vec3( 15, 40, 0), "Set\ntarget"));
+    menuPanelIntervention->addChild(createHUDButton("1", osg::Vec3(113, 50, 0), "Back main\nMenu"));
+
     osg::Group* menuDredging = new osg::Group();
     menuDredging->setName("DredgingMenu");
     menuDredging->addChild(createHUDButton("0", osg::Vec3( 15, 40, 0), "Set\ntarget"));
@@ -1296,7 +1369,28 @@ osg::Group* createHUD()
     switchMainMenu->addChild(menuInitGroup);
     HUDModelViewMatrix->addChild(switchMainMenu);
 
-    //DredgingMenu menu -> display only the DredgingMenu menu
+    //Survey menu
+    osg::Switch *switchSurveyMenu = new osg::Switch();
+    switchSurveyMenu->setName("switchSurveyMenu");
+    switchSurveyMenu->setNewChildDefaultValue(false);
+    switchSurveyMenu->addChild(menuSurvey);
+    HUDModelViewMatrix->addChild(switchSurveyMenu);
+
+    //ObjectRecovery menu
+    osg::Switch *switchObjectRecoveryMenu = new osg::Switch();
+    switchObjectRecoveryMenu->setName("switchObjectRecoveryMenu");
+    switchObjectRecoveryMenu->setNewChildDefaultValue(false);
+    switchObjectRecoveryMenu->addChild(menuObjectRecovery);
+    HUDModelViewMatrix->addChild(switchObjectRecoveryMenu);
+
+    //DredgingMenu menu
+    osg::Switch *switchPanelInterventionMenu = new osg::Switch();
+    switchPanelInterventionMenu->setName("switchPanelInterventionMenu");
+    switchPanelInterventionMenu->setNewChildDefaultValue(false);
+    switchPanelInterventionMenu->addChild(menuPanelIntervention);
+    HUDModelViewMatrix->addChild(switchPanelInterventionMenu);
+
+    //DredgingMenu menu
     osg::Switch *switchDredgingMenu = new osg::Switch();
     switchDredgingMenu->setName("switchDredgingMenu");
     switchDredgingMenu->setNewChildDefaultValue(false);
@@ -1306,21 +1400,140 @@ osg::Group* createHUD()
     //We use a vector to create an index of each switchXmenu
     std::vector<osg::Switch *> *switchVector = new std::vector<osg::Switch *>();
     switchVector->push_back(switchMainMenu);
-    switchVector->push_back(switchMainMenu);        //Simulates Survey menu
-    switchVector->push_back(switchMainMenu);        //Simulates ObjectRecovery menu
-    switchVector->push_back(switchMainMenu);        //Simulates PanelIntervention menu
+    switchVector->push_back(switchSurveyMenu);
+    switchVector->push_back(switchObjectRecoveryMenu);
+    switchVector->push_back(switchPanelInterventionMenu);
     switchVector->push_back(switchDredgingMenu);
 
     //Main switch -> display the background & childs
     osg::Switch *switchRoot = new osg::Switch();
     switchRoot->setName("switchRoot");
     switchRoot->setNewChildDefaultValue(false);
-    switchRoot->setUpdateCallback(new showMenuCallback(switchVector));
+    switchRoot->setUpdateCallback(new showMenuCallback(switchVector, menuTitle));
     switchRoot->addChild(root);
 
     return switchRoot;
 }
 
+
+
+osg::Group* createHUDfeedback()
+{
+    // Initialize root of scene:
+    osg::Group* root = new osg::Group();
+    // A geometry node for our HUD:
+    osg::Geode* HUDGeode = new osg::Geode();
+    // Text instance that wil show up in the HUD:
+    osgText::Text* menuTitle = new osgText::Text();
+    // Projection node for defining view frustrum for HUD:
+    osg::Projection* HUDProjectionMatrix = new osg::Projection;
+
+    // Initialize the projection matrix for viewing everything we
+    // will add as descendants of this node. Use screen coordinates
+    // to define the horizontal and vertical extent of the projection
+    // matrix. Positions described under this node will equate to
+    // pixel coordinates.
+    HUDProjectionMatrix->setMatrix(osg::Matrix::ortho2D(0,1280,0,800));
+
+    // For the HUD model view matrix use an identity matrix:
+    osg::MatrixTransform* HUDModelViewMatrix = new osg::MatrixTransform;
+    HUDModelViewMatrix->setMatrix(osg::Matrix::identity());
+
+    // Make sure the model view matrix is not affected by any transforms
+    // above it in the scene graph:
+    HUDModelViewMatrix->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+
+    // Add the HUD projection matrix as a child of the root node
+    // and the HUD model view matrix as a child of the projection matrix
+    // Anything under this node will be viewed using this projection matrix
+    // and positioned with this model view matrix.
+    root->addChild(HUDProjectionMatrix);
+    HUDProjectionMatrix->addChild(HUDModelViewMatrix);
+
+    // Add the Geometry node to contain HUD geometry as a child of the
+    // HUD model view matrix.
+    HUDModelViewMatrix->addChild(HUDGeode);
+
+    // Set up geometry for the HUD and add it to the HUD
+    osg::Geometry* HUDBackgroundGeometry = new osg::Geometry();
+
+    // ToDo:
+    // We need to increase the Y-value above 100 pixels
+    osg::Vec3Array* HUDBackgroundVertices = new osg::Vec3Array;
+    HUDBackgroundVertices->push_back(osg::Vec3(  0, 750, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(600, 750, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(600, 800, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(  0, 800, -1));
+
+    osg::DrawElementsUInt* HUDBackgroundIndices = new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0);
+    HUDBackgroundIndices->push_back(0);
+    HUDBackgroundIndices->push_back(1);
+    HUDBackgroundIndices->push_back(2);
+    HUDBackgroundIndices->push_back(3);
+
+    osg::Vec4Array* HUDcolors = new osg::Vec4Array;
+    HUDcolors->push_back(osg::Vec4(0.8f, 0.8f, 0.8f, 0.8f));
+
+    osg::Vec2Array* texcoords = new osg::Vec2Array(4);
+    (*texcoords)[0].set(0.0f, 0.0f);
+    (*texcoords)[1].set(1.0f, 0.0f);
+    (*texcoords)[2].set(1.0f, 1.0f);
+    (*texcoords)[3].set(0.0f, 1.0f);
+
+    HUDBackgroundGeometry->setTexCoordArray(0,texcoords);
+    osg::Texture2D* HUDTexture = new osg::Texture2D;
+    HUDTexture->setDataVariance(osg::Object::DYNAMIC);
+    osg::Image* hudImage;
+    hudImage = osgDB::readImageFile("~/.uwsim/data/textures/HUD_background.jpg");
+    HUDTexture->setImage(hudImage);
+    osg::Vec3Array* HUDnormals = new osg::Vec3Array;
+    HUDnormals->push_back(osg::Vec3(0.0f, 0.0f, 1.0f));
+    HUDBackgroundGeometry->setNormalArray(HUDnormals);
+    HUDBackgroundGeometry->setNormalBinding(osg::Geometry::BIND_OVERALL);
+    HUDBackgroundGeometry->addPrimitiveSet(HUDBackgroundIndices);
+    HUDBackgroundGeometry->setVertexArray(HUDBackgroundVertices);
+    HUDBackgroundGeometry->setColorArray(HUDcolors);
+    HUDBackgroundGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+    HUDGeode->addDrawable(HUDBackgroundGeometry);
+
+    // Create and set up a state set using the texture from above:
+    osg::StateSet* HUDStateSet = new osg::StateSet();
+    HUDGeode->setStateSet(HUDStateSet);
+    HUDStateSet->setTextureAttributeAndModes(0, HUDTexture, osg::StateAttribute::ON);
+
+    // For this state set, turn blending on (so alpha texture looks right)
+    HUDStateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
+
+    // Disable depth testing so geometry is draw regardless of depth values
+    // of geometry already draw.
+    HUDStateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
+    HUDStateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+
+    // Need to make sure this geometry is draw last. RenderBins are handled
+    // in numerical order so set bin number to 11
+    HUDStateSet->setRenderBinDetails(11, "RenderBin");
+
+    // Add the text (Text class is derived from drawable) to the geode:
+    HUDGeode->addDrawable(menuTitle);
+
+    // Set up the parameters for the text we'll add to the HUD:
+    menuTitle->setCharacterSize(25);
+    menuTitle->setFont("~/.uwsim/data/objects/arial.ttf");
+    menuTitle->setText("..:: UWSim user menu ::..");
+    menuTitle->setAxisAlignment(osgText::Text::SCREEN);
+    menuTitle->setPosition(osg::Vec3(30, 770, 0));
+    menuTitle->setColor(osg::Vec4(0, 0, 0, 1));
+
+    //Main switch -> display the background & childs
+    osg::Switch *switchRoot = new osg::Switch();
+    switchRoot->setName("switchRoot");
+    switchRoot->setNewChildDefaultValue(true);
+    switchRoot->setUpdateCallback(new hudFeedbackCallback(menuTitle));
+    switchRoot->addChild(root);
+
+    return switchRoot;
+}
 
 
 
@@ -1345,17 +1558,18 @@ void createWindshield (osg::MatrixTransform *baseTransform)
     {
         transform_->addChild(setNodePosition(b, -osg::PI/2+0.5, 0, createTextBox(1 , "windshield")));
     }
-*/
 
     osg::Group* missionStatusText = create3DText(osg::Vec3(0.7, -0.5, 0), "");
     missionStatusText->setUpdateCallback(new missionControlCallback());
     transform_->addChild(setNodePosition(0.7, -0.5, 0, missionStatusText));
+*/
 
     osg::MatrixTransform* udArrow =  new osg::MatrixTransform;
     udArrow->addChild(createQuadWithTex(0.2,1,1,1,1,"~/.uwsim/data/objects/up.png"));
     udArrow->setUpdateCallback(new upDownCallback());
     osg::MatrixTransform* udArrowTransform = setNodePosition(-0.1, -osg::PI/2+0.4,0,udArrow);
     transform_->addChild(udArrowTransform);
+
 
 /*    osg::MatrixTransform* pressureWarning =  new osg::MatrixTransform;
     pressureWarning->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(-90.0), 0.0, 1.0, 0.0));
@@ -1385,6 +1599,10 @@ void createWindshield (osg::MatrixTransform *baseTransform)
 
     osg::Group* menuHUD = createHUD();
     transform_->addChild(menuHUD);
+    
+    osg::Group* hudFeedback = createHUDfeedback();
+    transform_->addChild(hudFeedback);
+
     transform_->setNodeMask(0x40);
     transform_->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), osg::StateAttribute::ON); //Unset shader
     transform_->getStateSet()->addUniform(new osg::Uniform("uOverlayMap", 1));
