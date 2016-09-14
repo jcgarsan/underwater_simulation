@@ -15,6 +15,7 @@
 
 #include <osgWidget/Util>
 #include <osgOcean/OceanScene>
+#include <uwsim/OculusCameraManipulator.h>
 
 #include "osgOceanScene.h"
 #include "HUDCamera.h"
@@ -40,6 +41,8 @@ public:
 public:
   osg::ref_ptr<OculusDevice> oculusDevice;
   osg::ref_ptr<HMDCamera> hmd_camera;
+  osg::ref_ptr <OculusCameraManipulator> ocm;
+
   osg::Camera* createHUDCamera( );
 
   osg::ref_ptr<osgWidget::WindowManager> wm;

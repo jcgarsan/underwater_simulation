@@ -16,6 +16,7 @@
 #include "SimulatedIAUV.h"
 #include "ConfigXMLParser.h"
 #include "TrajectoryVisualization.h"
+#include "OculusCameraManipulator.h"
 
 class SceneEventHandler : public osgGA::GUIEventHandler
 {
@@ -25,16 +26,18 @@ private:
   osg::ref_ptr<TextHUD> _textHUD;
   std::vector<osg::ref_ptr<osgWidget::Window> > _windows;
   ConfigFile *_config;
+  OculusCameraManipulator * ocm;
 
   bool draw_frames_;
 public:
   //vehicle track indicates whether the camera must automatically track the vehicle node
   SceneEventHandler(std::vector<osg::ref_ptr<osgWidget::Window> > &windows, TextHUD* textHUD,
-                    SceneBuilder * sceneBuilder, ConfigFile *config) :
+                    SceneBuilder * sceneBuilder, ConfigFile *config, OculusCameraManipulator * camManip) :
       _scene(sceneBuilder->getScene()), _sceneBuilder(sceneBuilder), _textHUD(textHUD), _windows(windows), draw_frames_(false)
   {
     _textHUD->setSceneText("Clear Blue Sky");
     _config = config;
+    ocm=camManip;
   }
 
   virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter&)
@@ -191,6 +194,14 @@ public:
             callback->reset();
           }
         }
+	else if(ea.getKey() == ' ')
+	{
+
+	  if(ocm)
+	  {
+	    ocm->nextCam();
+	  }
+	}
 
       }
       default:

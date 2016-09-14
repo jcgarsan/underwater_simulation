@@ -14,7 +14,6 @@
 #include <uwsim/UWSimUtils.h>
 #include <uwsim/TextHUD.h>
 #include <uwsim/EventHandler.h>
-#include <uwsim/OculusCameraManipulator.h>
 
 #include <uwsim/oculusdevice.h>
 
@@ -120,6 +119,7 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
   { //We don't use Oculus with the UWSim.
 		viewer = new osgViewer::Viewer();	 
 		osgViewer::Viewer viewer();
+		ocm=NULL;
   }
   else
   {	// OCULUS RIFT: Open the HMD
@@ -195,7 +195,7 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
   else if (oculus)
   {
     freeMotion = 0;
-	osg::ref_ptr <OculusCameraManipulator> ocm = new OculusCameraManipulator(scene_builder->iauvFile[0]->baseTransform);
+	ocm = new OculusCameraManipulator(scene_builder->iauvFile[0]->baseTransform);
 	viewer->setCameraManipulator(ocm);
   }
   else
@@ -316,7 +316,7 @@ bool ViewBuilder::init(ConfigFile &config, SceneBuilder *scene_builder)
     }
   }
   viewer->addEventHandler(
-      new SceneEventHandler(camWidgets, hud.get(), scene_builder, &config));
+      new SceneEventHandler(camWidgets, hud.get(), scene_builder, &config,ocm));
 
   for (unsigned int i = 0; i < scene_builder->realcams.size(); i++)
   {
