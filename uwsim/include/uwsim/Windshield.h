@@ -1460,10 +1460,10 @@ osg::Group* createHUDfeedback()
     // ToDo:
     // We need to increase the Y-value above 100 pixels
     osg::Vec3Array* HUDBackgroundVertices = new osg::Vec3Array;
-    HUDBackgroundVertices->push_back(osg::Vec3(  0, 750, -1));
-    HUDBackgroundVertices->push_back(osg::Vec3(600, 750, -1));
-    HUDBackgroundVertices->push_back(osg::Vec3(600, 800, -1));
-    HUDBackgroundVertices->push_back(osg::Vec3(  0, 800, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(   0, 750, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(1000, 750, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(1000, 800, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(   0, 800, -1));
 
     osg::DrawElementsUInt* HUDBackgroundIndices = new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0);
     HUDBackgroundIndices->push_back(0);
