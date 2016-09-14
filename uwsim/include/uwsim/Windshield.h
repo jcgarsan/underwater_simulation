@@ -33,6 +33,7 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Int8MultiArray.h>
 #include <std_msgs/Int8.h>
+#include <std_msgs/String.h>
 #include <underwater_sensor_msgs/Pressure.h>
 #include <sensor_msgs/Range.h>
 
@@ -399,7 +400,7 @@ public:
         float alphaChannel;
         osg::Group* currGroup   = node->asGroup();
         osg::Geode* geode       = dynamic_cast<osg::Geode*>(currGroup->getChild(0));
-        osgText::Text* text     = (osgText::Text *) geode->getDrawable(0);;
+        osgText::Text* text     = (osgText::Text *) geode->getDrawable(0);
 
         switch(_state)
         {
@@ -667,6 +668,62 @@ private:
 };
 
 
+class hudFeedbackCallback : public osg::NodeCallback
+{
+public:
+    void hudTextCallback(const std_msgs::String::ConstPtr& msg)
+    {
+        hudMessage = msg->data;
+    }
+
+    void feedbackStateCallback(const std_msgs::Int8::ConstPtr& msg)
+    {
+        feedbackState = msg->data;
+    }
+
+    // Override the constructor
+    hudFeedbackCallback(osgText::Text *message) 
+    {
+        feedbackMessage =  message;
+        hudFeedback_sub_ = nh_.subscribe<std_msgs::String>("HUDfeedback", 1000, &hudFeedbackCallback::hudTextCallback, this);
+        feedbackState = -1;
+        missionControl_sub_ = nh_.subscribe<std_msgs::Int8>("missionControlAlarm", 1, &hudFeedbackCallback::feedbackStateCallback, this);
+    };
+
+
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        switch(feedbackState)
+        {
+            case 0:
+                feedbackMessage->setText("Mission failed");
+                break;
+            case 2:
+                feedbackMessage->setText("Mission in progress: " + hudMessage);
+                break;
+            case 3:
+                feedbackMessage->setText("Mission succeed");
+                break;
+            default:
+                feedbackMessage->setText("");
+                break;
+        }
+
+        //feedbackMessage->setText(hudMessage);
+
+        // Continue callbacks for chlildren too. 
+        ((osg::NodeCallback*) this)->traverse(node, nv);
+    };
+
+private:
+    ros::NodeHandle     nh_;
+    ros::Subscriber     hudFeedback_sub_;
+    ros::Subscriber     missionControl_sub_;
+    osgText::Text*      feedbackMessage;
+    std::string         hudMessage;
+    int                 feedbackState;
+};
+
 
 osg::Geode* createSphere(float radius, osg::Vec4 color)
 {
@@ -882,7 +939,7 @@ osg::Group* create3DText2()
     text->setCharacterSize(characterSize);
     text->setPosition(osg::Vec3(0.7, -0.5, 0));
     text->setAxisAlignment(osgText::Text::SCREEN);
-    text->setText("Mission succeed");
+    text->setText("Mission feedback");
     geode->addDrawable(text);
     rootNode->addChild(geode);
 
@@ -1360,6 +1417,125 @@ osg::Group* createHUD()
 
 
 
+osg::Group* createHUDfeedback()
+{
+    // Initialize root of scene:
+    osg::Group* root = new osg::Group();
+    // A geometry node for our HUD:
+    osg::Geode* HUDGeode = new osg::Geode();
+    // Text instance that wil show up in the HUD:
+    osgText::Text* menuTitle = new osgText::Text();
+    // Projection node for defining view frustrum for HUD:
+    osg::Projection* HUDProjectionMatrix = new osg::Projection;
+
+    // Initialize the projection matrix for viewing everything we
+    // will add as descendants of this node. Use screen coordinates
+    // to define the horizontal and vertical extent of the projection
+    // matrix. Positions described under this node will equate to
+    // pixel coordinates.
+    HUDProjectionMatrix->setMatrix(osg::Matrix::ortho2D(0,1280,0,800));
+
+    // For the HUD model view matrix use an identity matrix:
+    osg::MatrixTransform* HUDModelViewMatrix = new osg::MatrixTransform;
+    HUDModelViewMatrix->setMatrix(osg::Matrix::identity());
+
+    // Make sure the model view matrix is not affected by any transforms
+    // above it in the scene graph:
+    HUDModelViewMatrix->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+
+    // Add the HUD projection matrix as a child of the root node
+    // and the HUD model view matrix as a child of the projection matrix
+    // Anything under this node will be viewed using this projection matrix
+    // and positioned with this model view matrix.
+    root->addChild(HUDProjectionMatrix);
+    HUDProjectionMatrix->addChild(HUDModelViewMatrix);
+
+    // Add the Geometry node to contain HUD geometry as a child of the
+    // HUD model view matrix.
+    HUDModelViewMatrix->addChild(HUDGeode);
+
+    // Set up geometry for the HUD and add it to the HUD
+    osg::Geometry* HUDBackgroundGeometry = new osg::Geometry();
+
+    // ToDo:
+    // We need to increase the Y-value above 100 pixels
+    osg::Vec3Array* HUDBackgroundVertices = new osg::Vec3Array;
+    HUDBackgroundVertices->push_back(osg::Vec3(  0, 750, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(600, 750, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(600, 800, -1));
+    HUDBackgroundVertices->push_back(osg::Vec3(  0, 800, -1));
+
+    osg::DrawElementsUInt* HUDBackgroundIndices = new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0);
+    HUDBackgroundIndices->push_back(0);
+    HUDBackgroundIndices->push_back(1);
+    HUDBackgroundIndices->push_back(2);
+    HUDBackgroundIndices->push_back(3);
+
+    osg::Vec4Array* HUDcolors = new osg::Vec4Array;
+    HUDcolors->push_back(osg::Vec4(0.8f, 0.8f, 0.8f, 0.8f));
+
+    osg::Vec2Array* texcoords = new osg::Vec2Array(4);
+    (*texcoords)[0].set(0.0f, 0.0f);
+    (*texcoords)[1].set(1.0f, 0.0f);
+    (*texcoords)[2].set(1.0f, 1.0f);
+    (*texcoords)[3].set(0.0f, 1.0f);
+
+    HUDBackgroundGeometry->setTexCoordArray(0,texcoords);
+    osg::Texture2D* HUDTexture = new osg::Texture2D;
+    HUDTexture->setDataVariance(osg::Object::DYNAMIC);
+    osg::Image* hudImage;
+    hudImage = osgDB::readImageFile("~/.uwsim/data/textures/HUD_background.jpg");
+    HUDTexture->setImage(hudImage);
+    osg::Vec3Array* HUDnormals = new osg::Vec3Array;
+    HUDnormals->push_back(osg::Vec3(0.0f, 0.0f, 1.0f));
+    HUDBackgroundGeometry->setNormalArray(HUDnormals);
+    HUDBackgroundGeometry->setNormalBinding(osg::Geometry::BIND_OVERALL);
+    HUDBackgroundGeometry->addPrimitiveSet(HUDBackgroundIndices);
+    HUDBackgroundGeometry->setVertexArray(HUDBackgroundVertices);
+    HUDBackgroundGeometry->setColorArray(HUDcolors);
+    HUDBackgroundGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+    HUDGeode->addDrawable(HUDBackgroundGeometry);
+
+    // Create and set up a state set using the texture from above:
+    osg::StateSet* HUDStateSet = new osg::StateSet();
+    HUDGeode->setStateSet(HUDStateSet);
+    HUDStateSet->setTextureAttributeAndModes(0, HUDTexture, osg::StateAttribute::ON);
+
+    // For this state set, turn blending on (so alpha texture looks right)
+    HUDStateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
+
+    // Disable depth testing so geometry is draw regardless of depth values
+    // of geometry already draw.
+    HUDStateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
+    HUDStateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+
+    // Need to make sure this geometry is draw last. RenderBins are handled
+    // in numerical order so set bin number to 11
+    HUDStateSet->setRenderBinDetails(11, "RenderBin");
+
+    // Add the text (Text class is derived from drawable) to the geode:
+    HUDGeode->addDrawable(menuTitle);
+
+    // Set up the parameters for the text we'll add to the HUD:
+    menuTitle->setCharacterSize(25);
+    menuTitle->setFont("~/.uwsim/data/objects/arial.ttf");
+    menuTitle->setText("..:: UWSim user menu ::..");
+    menuTitle->setAxisAlignment(osgText::Text::SCREEN);
+    menuTitle->setPosition(osg::Vec3(30, 770, 0));
+    menuTitle->setColor(osg::Vec4(0, 0, 0, 1));
+
+    //Main switch -> display the background & childs
+    osg::Switch *switchRoot = new osg::Switch();
+    switchRoot->setName("switchRoot");
+    switchRoot->setNewChildDefaultValue(true);
+    switchRoot->setUpdateCallback(new hudFeedbackCallback(menuTitle));
+    switchRoot->addChild(root);
+
+    return switchRoot;
+}
+
+
 
 void createWindshield (osg::MatrixTransform *baseTransform)
 {
@@ -1382,17 +1558,18 @@ void createWindshield (osg::MatrixTransform *baseTransform)
     {
         transform_->addChild(setNodePosition(b, -osg::PI/2+0.5, 0, createTextBox(1 , "windshield")));
     }
-*/
 
     osg::Group* missionStatusText = create3DText(osg::Vec3(0.7, -0.5, 0), "");
     missionStatusText->setUpdateCallback(new missionControlCallback());
     transform_->addChild(setNodePosition(0.7, -0.5, 0, missionStatusText));
+*/
 
     osg::MatrixTransform* udArrow =  new osg::MatrixTransform;
     udArrow->addChild(createQuadWithTex(0.2,1,1,1,1,"~/.uwsim/data/objects/up.png"));
     udArrow->setUpdateCallback(new upDownCallback());
     osg::MatrixTransform* udArrowTransform = setNodePosition(-0.1, -osg::PI/2+0.4,0,udArrow);
     transform_->addChild(udArrowTransform);
+
 
 /*    osg::MatrixTransform* pressureWarning =  new osg::MatrixTransform;
     pressureWarning->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(-90.0), 0.0, 1.0, 0.0));
@@ -1422,6 +1599,10 @@ void createWindshield (osg::MatrixTransform *baseTransform)
 
     osg::Group* menuHUD = createHUD();
     transform_->addChild(menuHUD);
+    
+    osg::Group* hudFeedback = createHUDfeedback();
+    transform_->addChild(hudFeedback);
+
     transform_->setNodeMask(0x40);
     transform_->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), osg::StateAttribute::ON); //Unset shader
     transform_->getStateSet()->addUniform(new osg::Uniform("uOverlayMap", 1));
