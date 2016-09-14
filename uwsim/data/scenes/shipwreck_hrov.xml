@@ -83,12 +83,12 @@
       <joint>-0.3 </joint>
     </jointValues>
     <position>
-      <x> 0</x>
-      <y> 0 </y>
-      <z> 10 </z>
+      <x> 5</x>
+      <y> 7 </y>
+      <z> -10 </z>
     </position>
     <orientation>
-      <r>0</r>
+      <r>3.1415</r>
       <p>0 </p>
       <y>0 </y>
     </orientation>
@@ -168,7 +168,6 @@
         <z>3.14</z>
       </offsetr>
     </ForceSensor>
-
     <DredgeTool>
       <name>dredgetool</name>
       <target> end_effector</target>
@@ -183,8 +182,8 @@
         <z>0</z>
       </offsetr>
     </DredgeTool>
-
   </vehicle>
+
 	<object>
 	<name> blackbox </name>
 	<file> objects/blackbox_uib_trimesh.osg  </file>
@@ -240,10 +239,10 @@
 
   <object buried="0.75">
     <name> amphora </name>
-    <file> objects/full_amphora.osg  </file>
+    <file> objects/amphora.osg  </file>
     <position>
-      <x> 1</x>
-      <y> 0 </y>
+      <x> 10 </x>       <!-- 1, 0, 13 -->
+      <y> 5  </y>
       <z> 13 </z>
     </position>
     <orientation>
@@ -258,10 +257,10 @@
   </object>
 
   <rosInterfaces>
-    <ROSOdomToPAT>
+    <!-- <ROSOdomToPAT>
       <topic> /dataNavigator </topic>
       <vehicleName> girona500_RAUVI </vehicleName>
-    </ROSOdomToPAT>
+    </ROSOdomToPAT> -->
     <!--<ROSOdomToPAT>
       <topic> /dataNavigator_G500TRIDENT </topic>
       <vehicleName> girona500_TRIDENT </vehicleName>
@@ -322,4 +321,5 @@
   </rosInterfaces>
 
 </UWSimScene>
+
 

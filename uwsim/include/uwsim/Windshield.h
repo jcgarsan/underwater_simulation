@@ -1605,6 +1605,7 @@ void createWindshield (osg::MatrixTransform *baseTransform)
 
     transform_->setNodeMask(0x40);
     transform_->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), osg::StateAttribute::ON); //Unset shader
+    transform_->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF );  //Ignore shadows
     transform_->getStateSet()->addUniform(new osg::Uniform("uOverlayMap", 1));
     transform_->getStateSet()->addUniform(new osg::Uniform("uNormalMap", 2));
 }
