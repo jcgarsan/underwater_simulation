@@ -35,8 +35,8 @@ class OculusCameraManipulator: public osgGA::CameraManipulator
 
 			double *position2= new double[3];
 			double *rotation2= new double[3];
-			position2[0]=-0.5;position2[1]=0;position2[2]=3;
-			rotation2[0]=0;rotation2[1]=90;rotation2[2]=-90;
+			position2[0]=0.5;position2[1]=0;position2[2]=-3;
+			rotation2[0]=0;rotation2[1]=180;rotation2[2]=270;
 
 			//Add camera positions to vectors
 			camPositions.push_back(position1);
@@ -52,14 +52,14 @@ class OculusCameraManipulator: public osgGA::CameraManipulator
         virtual osg::Matrixd getMatrix() const;
         virtual void setByInverseMatrix(const osg::Matrixd &m);
         virtual osg::Matrixd getInverseMatrix() const;
-	void nextCam(void);
+		void nextCam(void);
 
     private:         
         osg::MatrixTransform *_mat;
         osg::Matrixd _offset;				//quaternion de oculus
-	std::vector<double*> camPositions;
-	std::vector<double*> camRotations;
-	int cam;
+		std::vector<double*> camPositions;
+		std::vector<double*> camRotations;
+		int cam;
 		ros::NodeHandle nh_;
 		ros::Subscriber ocm_sub_;
 		void ocmCallback(const geometry_msgs::Quaternion::ConstPtr& hmdimu);

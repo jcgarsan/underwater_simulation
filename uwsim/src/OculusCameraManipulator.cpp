@@ -17,7 +17,7 @@ void OculusCameraManipulator::ocmCallback(const geometry_msgs::Quaternion::Const
 {
 	//cout << "hmdimu: (" << hmdimu->x << "," << hmdimu->y << "," << hmdimu->z << "," << hmdimu->w << ")" << endl;
 	_offset.makeRotate(osg::Quat(-hmdimu->x, -hmdimu->y, -hmdimu->z, hmdimu->w));
-  	_offset.preMultRotate(osg::Quat(osg::DegreesToRadians(camRotations[cam][2]), osg::Vec3(0,0,1)));
+  _offset.preMultRotate(osg::Quat(osg::DegreesToRadians(camRotations[cam][2]), osg::Vec3(0,0,1)));
 	_offset.preMultRotate(osg::Quat(osg::DegreesToRadians(camRotations[cam][1]), osg::Vec3(0,1,0)));
 	_offset.preMultRotate(osg::Quat(osg::DegreesToRadians(camRotations[cam][0]), osg::Vec3(1,0,0)));
 	_offset.preMultTranslate(osg::Vec3d(camPositions[cam][0],camPositions[cam][1],camPositions[cam][2]));
@@ -34,8 +34,8 @@ osg::Matrixd OculusCameraManipulator::getMatrix() const
     osg::Matrix mat;          
 
     // get the matrix of the object node   
-	//mat = _mat->getMatrix();
-	mat = *getWorldCoords(_mat);
+ 	  //mat = _mat->getMatrix();
+ 	  mat = *getWorldCoords(_mat);
 
     // apply the offset = quaternion de oculus
     mat = osg::Matrixd::inverse(_offset) * mat;
