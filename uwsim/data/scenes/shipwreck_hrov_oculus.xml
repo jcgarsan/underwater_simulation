@@ -7,7 +7,7 @@
     <windx> 1.0 </windx>
     <windy> 1.0 </windy>
     <windSpeed> 12 </windSpeed>		<!-- 0 -->
-    <depth> 100 </depth>		<!-- 10000 -->
+    <depth> 100 </depth>		      <!-- 10000 -->
     <reflectionDamping> 0.35 </reflectionDamping> <!-- .35 -->
     <waveScale> 1e-8 </waveScale>
     <isNotChoppy> 0 </isNotChoppy>
@@ -17,15 +17,15 @@
     <fog>
       <density> 0.05 </density>		<!-- ISR_experiments 0.05, original 0.1 -->
       <color>
-	<r>0.017</r>
-	<g>0.027</g>
-	<b>0.079</b>
+        <r>0.017</r>
+        <g>0.027</g>
+        <b>0.079</b>
       </color>
     </fog>
     <color>
-	<r>0.017</r>
-	<g>0.027</g>
-	<b>0.079</b>
+      <r>0.017</r>
+      <g>0.027</g>
+      <b>0.079</b>
     </color>
     <attenuation>
       <r>0.015</r>
@@ -52,19 +52,19 @@
   </simParams>
 
   <camera>
-    <freeMotion> 0 </freeMotion>	<!-- 1 -->
+    <freeMotion> 0 </freeMotion>    <!-- 1 -->
     <objectToTrack>girona500_RAUVI</objectToTrack>
     <fov> 60 </fov>
     <aspectRatio> 1.33 </aspectRatio>
     <near> 1 </near>
-    <far> 10000 </far>			<!-- 300 -->
-    <position>				<!-- 16, 9, -7 -->
-      <x> -0.3 </x>			<!-- 0, 2, 0 -->
+    <far> 10000 </far>			       <!-- 300 -->
+    <position>				             <!-- 16, 9, -7 -->
+      <x> -0.3 </x>			           <!-- 0, 2, 0 -->
       <y> 0 </y>
       <z> 0 </z>
     </position>
-    <lookAt>				<!-- 5, 7, -10 -->
-      <x> 0 </x>			<!-- 0.3, 0.1, 0 -->
+    <lookAt>				               <!-- 5, 7, -10 -->
+      <x> 0 </x>			             <!-- 0.3, 0.1, 0 -->
       <y> 0 </y>
       <z> 0 </z>
     </lookAt>

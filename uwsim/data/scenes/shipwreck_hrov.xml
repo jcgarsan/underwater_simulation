@@ -241,15 +241,49 @@
     <name> amphora </name>
     <file> objects/amphora.osg  </file>
     <position>
-      <x> 10 </x>       <!-- 1, 0, 13 -->
-      <y> 5  </y>
-      <z> 13 </z>
+      <x> 13 </x>       <!-- 1, 0, 13 -->
+      <y> 14 </y>       <!-- 10, 5, 13 in front of the ship-->
+      <z> 13.5 </z>
     </position>
     <orientation>
       <r>1.57</r>
       <p>0 </p>
       <y>-1.57 </y>
     </orientation>
+    <physics>
+      <mass> 0 </mass>
+      <collisionShapeType> trimesh </collisionShapeType>
+    </physics>
+  </object>
+  
+  <object>
+    <name>waypoint1</name>
+    <file>objects/torusRed.3ds</file>
+    <position>
+      <x> 13 </x>
+      <y> 11 </y>
+      <z> 4 </z>
+    </position>
+    <orientation>
+      <r> 0 </r>
+      <p> 0 </p>
+      <y> 1.36  </y>
+    </orientation>
+    <scaleFactor>
+      <x> 0.2 </x>
+      <y> 0.2 </y>
+      <z> 0.2 </z>
+    </scaleFactor>
+    <offsetp>
+      <x>0</x>
+      <y>0</y>
+      <z>0</z>
+    </offsetp>
+    <offsetr>
+      <x> 3.1415</x>
+      <y> 0</y>
+      <z> -1.57 </z>
+    </offsetr>
     <physics>
       <mass> 0 </mass>
       <collisionShapeType> trimesh </collisionShapeType>
