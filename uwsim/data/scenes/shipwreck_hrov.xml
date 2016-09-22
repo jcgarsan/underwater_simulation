@@ -258,32 +258,22 @@
   
   <object>
     <name>waypoint1</name>
-    <file>objects/torusRed.3ds</file>
+    <file>objects/arrow.obj</file>
     <position>
       <x> 13 </x>
-      <y> 11 </y>
+      <y> 15 </y>
       <z> 4 </z>
     </position>
     <orientation>
-      <r> 0 </r>
-      <p> 0 </p>
-      <y> 1.36  </y>
+      <r> 1.57 </r>
+      <p> -1.57 </p>
+      <y> 0 </y>
     </orientation>
     <scaleFactor>
-      <x> 0.2 </x>
-      <y> 0.2 </y>
-      <z> 0.2 </z>
+      <x> 0.05 </x>
+      <y> 0.05 </y>
+      <z> 0.05 </z>
     </scaleFactor>
-    <offsetp>
-      <x>0</x>
-      <y>0</y>
-      <z>0</z>
-    </offsetp>
-    <offsetr>
-      <x> 3.1415</x>
-      <y> 0</y>
-      <z> -1.57 </z>
-    </offsetr>
     <physics>
       <mass> 0 </mass>
       <collisionShapeType> trimesh </collisionShapeType>
