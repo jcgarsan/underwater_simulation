@@ -478,5 +478,21 @@ public:
 
   ~contactSensorToROS();
 };
+
+class DynamicHFToROSFloat : public ROSPublisherInterface
+{
+  double dredge;
+public:
+  DynamicHFToROSFloat(double dredge, std::string topic, int rate);
+
+  void createPublisher(ros::NodeHandle &nh);
+
+  void refreshData(double dredged);
+
+  void publish();
+
+  ~DynamicHFToROSFloat();
+};
+
 #endif
 

@@ -21,6 +21,7 @@
 #include <osg/Switch>
 #include <osg/MatrixTransform>
 #include <osgDB/ReadFile>
+#include <uwsim/ROSInterface.h>
 
 #if OSG_VERSION_MAJOR>=3
 #include <osgDB/Options>
@@ -439,12 +440,19 @@ DynamicHF::DynamicHF(osg::HeightField* height, boost::shared_ptr<osg::Matrix> ma
   heightField=height;
   objectMat=mat;
   mat->preMultRotate(heightField->getRotation());
+  initHeight=0.0854941;
+  addedElems=25;
+  publisher = new DynamicHFToROSFloat(0,"/dredgeAchieved",10);
 }
 
 //Checks if any dredge tool is in dredging distance and modifies the dynamicHF
 void DynamicHF::update( osg::NodeVisitor*,osg::Drawable* drawable )
 {
 
+  int validPoints=(heightField->getNumRows()-addedElems*2)*(heightField->getNumColumns()-addedElems*2);
+  //std::cout<<validPoints<<std::endl;
+  double dredged=0;
+  int count=0;
   for(unsigned int i=0;i<dredgeTools.size();i++)
   {
     boost::shared_ptr<osg::Matrix> dredgeToolmat=dredgeTools[i]->getDredgePosition();
@@ -461,12 +469,17 @@ void DynamicHF::update( osg::NodeVisitor*,osg::Drawable* drawable )
           osg::Vec3(c*heightField->getXInterval(),r*heightField->getYInterval(),heightField->getHeight(c,r)))
           ).length2()< 0.01)
         {
-           heightField->setHeight(c, r,heightField->getHeight(c,r)-0.01);
+           heightField->setHeight(c, r,std::max(heightField->getHeight(c,r)-0.01,0.0));
            modified=1;
            nparticles++;
         }
+        if(r>=addedElems and c>=addedElems and (heightField->getNumRows()-addedElems)>r and (heightField->getNumColumns()-addedElems)>c){
+	  dredged+=(1-heightField->getHeight(c,r)/initHeight)/validPoints;
+        }
       }
     }
+
+    publisher->refreshData(dredged);
 
     if(modified)
     {
@@ -515,6 +528,8 @@ osg::Node* createHeightField(osg::ref_ptr<osg::Node> object, std::string texFile
   //std::cout<<"Allocate: "<<(abs(box.xMax()-box.xMin())/(resX)+1)<<" "<<(abs(box.yMax()-box.yMin())/(resY)+1)<<std::endl;        
   //std::cout<<"Origin: "<<heightField->getOrigin().x()<<" "<<heightField->getOrigin().y()<<" "<<heightField->getOrigin().z()<<std::endl; 
   //std::cout<<"Height: "<<(box.zMax()-box.zMin())*percent<<std::endl;
+  //std::cout<<"Init Height: "<<abs(box.zMax()-box.zMin())*percent<<std::endl;
+  //std::cout<<"Added Elems: "<<addedElems<<std::endl;
 
   //set height
   for (int r = 0; r < heightField->getNumRows(); r++)

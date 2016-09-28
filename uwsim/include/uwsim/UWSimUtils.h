@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "ConfigXMLParser.h"
+
 #include <resource_retriever/retriever.h>
 #include <osgDB/Registry>
 #include <osgDB/FileNameUtils>
@@ -202,6 +203,10 @@ class AbstractDredgeTool
     virtual void dredgedParticles(int nparticles) =0;
 };
 
+//Declaration of publisher
+
+class DynamicHFToROSFloat;
+
 class DynamicHF : public osg::Drawable::UpdateCallback
 {
   public:
@@ -211,6 +216,9 @@ class DynamicHF : public osg::Drawable::UpdateCallback
     osg::HeightField* heightField;
     boost::shared_ptr<osg::Matrix> objectMat;
     std::vector<boost::shared_ptr<AbstractDredgeTool> > dredgeTools;
+    double initHeight;
+    int addedElems;
+    DynamicHFToROSFloat* publisher;
 };
 
 osg::Node* createHeightField(osg::ref_ptr<osg::Node> object, std::string texFile, double percent,  const std::vector<boost::shared_ptr<SimulatedIAUV> >  vehicles);

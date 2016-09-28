@@ -23,6 +23,7 @@
 #include <underwater_sensor_msgs/Pressure.h>
 #include <underwater_sensor_msgs/DVL.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Float64.h>
 #include <osg/LineStipple>
 #include <robot_state_publisher/robot_state_publisher.h>
 #include <kdl_parser/kdl_parser.hpp>
@@ -1241,5 +1242,33 @@ void ObjectPickedToROS::publish() {
 }
   
 ObjectPickedToROS::~ObjectPickedToROS()
+{
+}
+
+DynamicHFToROSFloat::DynamicHFToROSFloat(double dredged, std::string topic, int rate) :
+    ROSPublisherInterface(topic, rate), dredge(dredged)
+{
+}
+
+void DynamicHFToROSFloat::createPublisher(ros::NodeHandle &nh)
+{
+  ROS_INFO("DynamicHFToFloat publisher on topic %s", topic.c_str());
+  pub_ = nh.advertise < std_msgs::Float64 > (topic, 1);
+}
+
+void DynamicHFToROSFloat::publish()
+{
+    std_msgs::Float64 msg;
+    msg.data=dredge;
+    pub_.publish(msg);
+
+}
+
+void DynamicHFToROSFloat::refreshData(double dredged)
+{
+  dredge=dredged;
+}
+
+DynamicHFToROSFloat::~DynamicHFToROSFloat()
 {
 }
